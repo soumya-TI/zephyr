@@ -54,6 +54,9 @@
  */
 #define DT_SCMI_TRANSPORT_PROTO_HAS_CHAN(node_id, idx)\
 	DT_PROP_HAS_IDX(node_id, shmem, idx)
+#elif CONFIG_ARM_SCMI_SMCC_TRANSPORT
+#define DT_SCMI_TRANSPORT_PROTO_HAS_CHAN(node_id, idx)\
+	DT_PROP_HAS_IDX(node_id, shmem, idx)
 #else /* CONFIG_ARM_SCMI_MAILBOX_TRANSPORT */
 #error "Transport with static channels needs to define HAS_CHAN macro"
 #endif /* CONFIG_ARM_SCMI_MAILBOX_TRANSPORT */

@@ -113,7 +113,7 @@ static int scmi_send_message_polling(struct scmi_protocol *proto,
 					struct scmi_message *reply)
 {
 	int ret;
-	int status;
+	// int status;
 
 	/* wait for channel to be free */
 	if (!k_is_pre_kernel() && k_mutex_lock(&proto->tx->lock, K_NO_WAIT)) {
@@ -127,7 +127,7 @@ static int scmi_send_message_polling(struct scmi_protocol *proto,
 	 * it must be disabled to avoid unnecessary interrupts and
 	 * ensure proper polling behavior.
 	 */
-	status = scmi_interrupt_enable(proto->tx, false);
+	// status = scmi_interrupt_enable(proto->tx, false);
 
 	ret = scmi_transport_send_message(proto->transport, proto->tx, msg);
 	if (ret < 0) {
@@ -154,9 +154,9 @@ static int scmi_send_message_polling(struct scmi_protocol *proto,
 
 cleanup:
 	/* restore scmi interrupt enable status when disable it pass */
-	if (status >= 0) {
-		scmi_interrupt_enable(proto->tx, true);
-	}
+	// if (status >= 0) {
+	// 	scmi_interrupt_enable(proto->tx, true);
+	// }
 
 	if (!k_is_pre_kernel()) {
 		k_mutex_unlock(&proto->tx->lock);
@@ -217,12 +217,15 @@ int scmi_send_message(struct scmi_protocol *proto, struct scmi_message *msg,
 	if (!proto->tx->ready) {
 		return -EINVAL;
 	}
-
+#ifdef CONFIG_ARM_SCMI_SMCC_TRANSPORT
+	return scmi_send_message_polling(proto, msg, reply);
+#else
 	if (use_polling) {
 		return scmi_send_message_polling(proto, msg, reply);
 	} else {
 		return scmi_send_message_interrupt(proto, msg, reply);
 	}
+#endif
 }
 
 static int scmi_core_protocol_negotiate(struct scmi_protocol *proto)
