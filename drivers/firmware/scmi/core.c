@@ -87,33 +87,12 @@ static int scmi_core_setup_chan(const struct device *transport,
 	return 0;
 }
 
-static int scmi_interrupt_enable(struct scmi_channel *chan, bool enable)
-{
-	struct scmi_mbox_channel *mbox_chan;
-	struct mbox_dt_spec *tx_reply;
-	bool comp_int;
-
-	mbox_chan = chan->data;
-	comp_int = enable ? SCMI_SHMEM_CHAN_FLAG_IRQ_BIT : 0;
-
-	if (mbox_chan->tx_reply.dev) {
-		tx_reply = &mbox_chan->tx_reply;
-	} else {
-		tx_reply = &mbox_chan->tx;
-	}
-
-	/* re-set completion interrupt */
-	scmi_shmem_update_flags(mbox_chan->shmem, SCMI_SHMEM_CHAN_FLAG_IRQ_BIT, comp_int);
-
-	return mbox_set_enabled_dt(tx_reply, enable);
-}
-
 static int scmi_send_message_polling(struct scmi_protocol *proto,
 					struct scmi_message *msg,
 					struct scmi_message *reply)
 {
 	int ret;
-	// int status;
+	int status = -ENOTSUP;
 
 	/* wait for channel to be free */
 	if (!k_is_pre_kernel() && k_mutex_lock(&proto->tx->lock, K_NO_WAIT)) {
@@ -127,7 +106,10 @@ static int scmi_send_message_polling(struct scmi_protocol *proto,
 	 * it must be disabled to avoid unnecessary interrupts and
 	 * ensure proper polling behavior.
 	 */
-	// status = scmi_interrupt_enable(proto->tx, false);
+	if (!proto->tx->polling_only) {
+		status = scmi_transport_interrupt_enable(proto->transport,
+							     proto->tx, false);
+	}
 
 	ret = scmi_transport_send_message(proto->transport, proto->tx, msg);
 	if (ret < 0) {
@@ -154,9 +136,9 @@ static int scmi_send_message_polling(struct scmi_protocol *proto,
 
 cleanup:
 	/* restore scmi interrupt enable status when disable it pass */
-	// if (status >= 0) {
-	// 	scmi_interrupt_enable(proto->tx, true);
-	// }
+	if (status >= 0) {
+		scmi_transport_interrupt_enable(proto->transport, proto->tx, true);
+	}
 
 	if (!k_is_pre_kernel()) {
 		k_mutex_unlock(&proto->tx->lock);
@@ -217,15 +199,17 @@ int scmi_send_message(struct scmi_protocol *proto, struct scmi_message *msg,
 	if (!proto->tx->ready) {
 		return -EINVAL;
 	}
-#ifdef CONFIG_ARM_SCMI_SMCC_TRANSPORT
-	return scmi_send_message_polling(proto, msg, reply);
-#else
-	if (use_polling) {
+
+	/*
+	 * Use polling mode if:
+	 * 1. The channel is polling-only (e.g., SMC transport), OR
+	 * 2. The caller explicitly requests polling mode
+	 */
+	if (proto->tx->polling_only || use_polling) {
 		return scmi_send_message_polling(proto, msg, reply);
 	} else {
 		return scmi_send_message_interrupt(proto, msg, reply);
 	}
-#endif
 }
 
 static int scmi_core_protocol_negotiate(struct scmi_protocol *proto)

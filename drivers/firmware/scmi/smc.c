@@ -135,10 +135,11 @@ static int scmi_smc_setup_chan(const struct device *transport,
 		return -ENOTSUP;
 	}
 
+	chan->polling_only = true;
+
 	/*
-	 * Force polling mode for SMC transport.
-	 * SMC/HVC calls are synchronous and don't support interrupts,
-	 * so we must use polling instead of IRQ-based communication.
+	 * Disable interrupt flag in shared memory to indicate
+	 * polling-only operation to platform.
 	 */
 	scmi_shmem_update_flags(smc_chan->shmem,
 				SCMI_SHMEM_CHAN_FLAG_IRQ_BIT,
