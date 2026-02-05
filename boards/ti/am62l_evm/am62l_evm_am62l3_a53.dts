@@ -14,8 +14,8 @@
 	compatible = "ti,am62l_evm";
 
 	chosen {
-		zephyr,console = &main_uart0;
-		zephyr,shell-uart = &main_uart0;
+		zephyr,console = &main_uart4;
+		zephyr,shell-uart = &main_uart4;
 		zephyr,sram = &ddr0;
 	};
 
@@ -46,6 +46,14 @@
 	current-speed = <115200>;
 	pinctrl-0 = <&uart1_rx_default>,
 		    <&uart1_tx_default>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&main_uart4 {
+	current-speed = <115200>;
+	pinctrl-0 = <&uart4_rx_default>,
+		    <&uart4_tx_default>;
 	pinctrl-names = "default";
 	status = "okay";
 };

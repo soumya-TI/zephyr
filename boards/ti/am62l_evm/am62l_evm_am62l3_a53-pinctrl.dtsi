@@ -24,4 +24,12 @@
 		/* (A12) MCASP0_ACLKR.UART1_TXD */
 		pinmux = <K3_PINMUX(0x019c, PIN_OUTPUT, MUX_MODE_2)>;
 	};
+
+	uart4_rx_default: uart4_rx_default {
+		pinmux = <K3_PINMUX(0x00ec, PIN_INPUT, MUX_MODE_3)>; /* (M23) GPMC0_CSn2.UART4_RXD */
+	};
+
+	uart4_tx_default: uart4_tx_default {
+		pinmux = <K3_PINMUX(0x00f0, PIN_OUTPUT, MUX_MODE_3)>; /* (M22) GPMC0_CSn3.UART4_TXD */
+	};	
 };
