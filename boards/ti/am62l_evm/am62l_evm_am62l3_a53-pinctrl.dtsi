@@ -14,4 +14,29 @@
 	uart0_tx_default: uart0_tx_default {
 		pinmux = <K3_PINMUX(0x1b8, PIN_OUTPUT, MUX_MODE_0)>; /* (C13) UART0_TXD */
 	};
+	
+	uart4_rx_default: uart4_rx_default {
+		pinmux = <K3_PINMUX(0x00ec, PIN_INPUT, MUX_MODE_3)>; /* (D13) UART0_RXD */
+	};
+
+	uart4_tx_default: uart4_tx_default {
+		pinmux = <K3_PINMUX(0x00f0, PIN_OUTPUT, MUX_MODE_3)>; /* (C13) UART0_TXD */
+	};
+	
+	uart1_rx_default: uart1_rx_default {
+		pinmux = <K3_PINMUX(0x0198, PIN_INPUT, MUX_MODE_2)>; /* (D13) UART0_RXD */
+	};
+
+	uart1_tx_default: uart1_tx_default {
+		pinmux = <K3_PINMUX(0x019c, PIN_OUTPUT, MUX_MODE_2)>; /* (C13) UART0_TXD */
+	};
+	
+	uart1_ctsn_default: uart1_ctsn_default {
+		pinmux = <K3_PINMUX(0x0180, PIN_INPUT, MUX_MODE_2)>; /* (D13) UART0_RXD */
+	};
+
+	uart1_rtsn_default: uart1_rtsn_default {
+		pinmux = <K3_PINMUX(0x0184, PIN_OUTPUT, MUX_MODE_2)>; /* (C13) UART0_TXD */
+	};
+	
 };

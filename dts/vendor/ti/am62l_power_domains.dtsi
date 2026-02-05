@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2025 Texas Instruments Incorporated
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/ {
+	power-domains {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		main_uart0_pd: power-domain@59 {
+			compatible = "arm,scmi-power-domain";
+			reg = <89>;
+			#power-domain-cells = <0>;
+		};
+
+		main_uart1_pd: power-domain@4d {
+			compatible = "arm,scmi-power-domain";
+			reg = <77>;
+			#power-domain-cells = <0>;
+		};
+
+		main_uart2_pd: power-domain@4e {
+			compatible = "arm,scmi-power-domain";
+			reg = <78>;
+			#power-domain-cells = <0>;
+		};
+
+		main_uart3_pd: power-domain@4f {
+			compatible = "arm,scmi-power-domain";
+			reg = <79>;
+			#power-domain-cells = <0>;
+		};
+
+		main_uart4_pd: power-domain@50 {
+			compatible = "arm,scmi-power-domain";
+			reg = <80>;
+			#power-domain-cells = <0>;
+		};
+
+		main_uart5_pd: power-domain@51 {
+			compatible = "arm,scmi-power-domain";
+			reg = <81>;
+			#power-domain-cells = <0>;
+		};
+
+		main_uart6_pd: power-domain@52 {
+			compatible = "arm,scmi-power-domain";
+			reg = <82>;
+			#power-domain-cells = <0>;
+		};
+	};
+};
