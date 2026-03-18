@@ -1,0 +1,70 @@
+# Copyright (c) 2023, ithinx GmbH
+# Copyright (c) 2023, Tonies GmbH
+# Copyright (c) 2026, Texas Instruments Incorporated
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config BQ27Z8XX_COMMON
+	bool
+	select I2C
+	help
+	  Hidden symbol — selected automatically by BQ27Z758 or BQ27Z855.
+	  Enables the shared transport, MAC protocol, and common property handling
+	  for TI BQ27Z8xx family fuel gauges.
+
+config BQ27Z758
+	bool "TI BQ27Z758 fuel gauge"
+	default y
+	depends on DT_HAS_TI_BQ27Z758_ENABLED
+	select BQ27Z8XX_COMMON
+	help
+	  Enable driver for the TI BQ27Z758 fuel gauge.
+
+config BQ27Z855
+	bool "TI BQ27Z855 fuel gauge"
+	default y
+	depends on DT_HAS_TI_BQ27Z855_ENABLED
+	select BQ27Z8XX_COMMON
+	help
+	  Enable driver for the TI BQ27Z855 fuel gauge.
+
+config EMUL_BQ27Z8XX
+	bool "Emulate BQ27Z8XX fuel gauge"
+	default y
+	depends on EMUL
+	depends on BQ27Z758 || BQ27Z855
+	help
+	  Provides an I2C emulator for the TI BQ27Z8XX fuel gauge family.
+	  The emulated variant matches the DT compatible used (ti,bq27z758 or
+	  ti,bq27z855).  Register reads return simple non-zero values; MAC
+	  commands return correctly formatted responses with the appropriate
+	  payload length and checksum.
+
+config EMUL_BQ27Z758
+	bool "Emulate BQ27Z758 fuel gauge (legacy name)"
+	default y
+	depends on EMUL
+	depends on BQ27Z758
+	help
+	  Equivalent to EMUL_BQ27Z8XX when only a BQ27Z758 is present.
+	  Provided for backward compatibility with projects that set
+	  CONFIG_EMUL_BQ27Z758=y; both symbols enable the same emulator.
+
+config BQ27Z8XX_SHELL
+	bool "Shell commands for BQ27Z8XX fuel gauge"
+	depends on BQ27Z758 || BQ27Z855
+	depends on SHELL
+	help
+	  Enable the bq27z8xx shell command set providing status, lifetime data
+	  dumps, security state inspection, and security state transitions
+	  (seal, unseal, full_access) for the TI BQ27Z8XX fuel gauge family
+	  (BQ27Z758 and BQ27Z855).
+
+config BQ27Z758_SHELL
+	bool "Shell commands for BQ27Z758 fuel gauge (legacy name)"
+	depends on BQ27Z758
+	depends on SHELL
+	help
+	  Equivalent to BQ27Z8XX_SHELL when only a BQ27Z758 is present.
+	  Provided for backward compatibility with projects that set
+	  CONFIG_BQ27Z758_SHELL=y; both symbols enable the same shell commands.
