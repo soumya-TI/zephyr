@@ -1,0 +1,15 @@
+sample:
+  name: TI BQ27Z8XX Fuel Gauge Shell
+  description: >
+    Interactive shell interface for the TI BQ27Z8XX fuel gauge family
+    (BQ27Z758 and BQ27Z855).  Connect a terminal at 115200 baud and use the
+    bq27z8xx commands to inspect device status, lifetime data, security mode,
+    and raw MAC registers.
+  tags:
+    - fuel_gauge
+    - ti
+    - bq27z8xx
+    - shell
+  platforms:
+    - lp_mspm0g3507
+    - native_sim
