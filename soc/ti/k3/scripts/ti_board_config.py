@@ -39,12 +39,24 @@ BOARDCFG_TYPE_NAMES = {
 }
 
 
+def _safe_output_path(path: str, base_dir: str) -> str:
+    """Validate output path against a trusted base directory."""
+    canonical = os.path.realpath(path)
+    base = os.path.realpath(base_dir) + os.sep
+    if not canonical.startswith(base):
+        raise ValueError(
+            f"Output path {path!r} resolves to {canonical!r}, "
+            f"which is outside the build directory {base_dir!r}"
+        )
+    return canonical
+
+
 class TIBoardConfigGenerator:
     """Generates TI K3 board configuration binaries from YAML."""
 
     def __init__(self, schema_file: str, config_file: str):
-        self.schema_file = schema_file
-        self.config_file = config_file
+        self.schema_file = os.path.realpath(schema_file)
+        self.config_file = os.path.realpath(config_file)
         self.schema: dict[str, any] = {}
         self.config: dict[str, any] = {}
 
@@ -167,6 +179,7 @@ def create_combined_blob(
     sw_rev: int,
     devgrp: int,
     verbose: bool,
+    base_dir: str,
 ) -> None:
     """Create combined board config blob from multiple binaries.
 
@@ -190,6 +203,7 @@ def create_combined_blob(
         config_data += binary_data
         offset += size
 
+    output_file = _safe_output_path(output_file, base_dir)
     try:
         with open(output_file, 'wb') as f:
             f.write(struct.pack('<BB', num_elems, sw_rev))
@@ -271,7 +285,7 @@ def process_single_mode(args) -> None:
 
     binary_data = generator.generate()
 
-    with open(args.output, 'wb') as f:
+    with open(_safe_output_path(args.output, args.build_dir), 'wb') as f:
         f.write(binary_data)
 
     print(f"Generated: {args.output} ({len(binary_data)} bytes)")
@@ -287,7 +301,9 @@ def process_combined_mode(args) -> None:
         binary_data = convert_config_to_binary(args.schema, yaml_path, name, args.verbose)
         config_binaries.append((binary_data, config_type, name))
 
-    create_combined_blob(config_binaries, args.output, args.sw_rev, args.devgrp, args.verbose)
+    create_combined_blob(
+        config_binaries, args.output, args.sw_rev, args.devgrp, args.verbose, args.build_dir
+    )
 
 
 def validate_mode_selection(parser, single_mode: bool, combined_mode: bool) -> None:
@@ -327,6 +343,11 @@ Mode 2: Combined Blob (converts YAMLs and creates blob)
     parser.add_argument('--sw-rev', type=int, default=1, help='Software revision (default: 1)')
     parser.add_argument('--devgrp', type=int, default=0, help='Device group (default: 0)')
     parser.add_argument('-o', '--output', required=True, help='Output binary file')
+    parser.add_argument(
+        '--build-dir',
+        required=True,
+        help='CMake build directory (trusted base for output path validation)',
+    )
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 
     args = parser.parse_args()

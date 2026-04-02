@@ -13,6 +13,18 @@ from re import sub
 from typing import ClassVar
 
 
+def _safe_output_path(path: str, base_dir: str) -> str:
+    """Validate output path against a trusted base directory."""
+    canonical = os.path.realpath(path)
+    base = os.path.realpath(base_dir) + os.sep
+    if not canonical.startswith(base):
+        raise ValueError(
+            f"Output path {path!r} resolves to {canonical!r}, "
+            f"which is outside the build directory {base_dir!r}"
+        )
+    return canonical
+
+
 class SHA:
     """SHA algorithm constants and utilities."""
 
@@ -31,6 +43,8 @@ class SHA:
     @staticmethod
     def calculate(file_path: str, sha_type: str = SHA512) -> str:
         """Calculate SHA hash of a file."""
+        if sha_type not in SHA.OIDS:
+            raise ValueError(f"Unsupported SHA type: {sha_type!r}")
         # Using shell=False for security - pass command as list
         sha_val = subprocess.check_output(
             ["openssl", "dgst", f"-{sha_type}", "-hex", file_path],
@@ -86,7 +100,7 @@ class X509Component(ABC):
         """
         self.comp_type = comp_type
         self.boot_core = boot_core
-        self.binary_path = binary_path
+        self.binary_path = os.path.realpath(binary_path)
         self.load_addr = load_addr
         self.comp_opts = comp_opts
         self.section_name = (
@@ -281,21 +295,17 @@ coreDbgSecEn = INTEGER:0
 
 
 class CertificateBuilder:
-    """Build X509 certificate template from components.
-
-    Follows U-Boot's approach of dynamically building the template
-    from registered components.
-    """
+    """Build X509 certificate template from components."""
 
     # Distinguished name defaults
     DEFAULT_DN: ClassVar[dict[str, str]] = {
         "C": "US",
-        "ST": "SC",
-        "L": "New York",
-        "O": "Texas Instruments., Inc.",
-        "OU": "DSP",
-        "CN": "Albert",
-        "emailAddress": "Albert@gt.ti.com",
+        "ST": "TX",
+        "L": "Dallas",
+        "O": "Texas Instruments Incorporated",
+        "OU": "Processors",
+        "CN": "TI Support",
+        "emailAddress": "support@ti.com",
     }
 
     def __init__(self, sha_type: str = SHA.SHA512, swrv: int = 1) -> None:
@@ -391,12 +401,13 @@ class ROMImageGenerator:
         """Initialize ROM image generator."""
         self.builder = builder
 
-    def generate(self, key_file: str, output_file: str) -> None:
+    def generate(self, key_file: str, output_file: str, build_dir: str) -> None:
         """Generate the signed ROM image.
 
         Args:
             key_file: Path to signing key (.pem)
             output_file: Path to output ROM image
+            build_dir: Trusted CMake build directory for output path validation
 
         Build artifacts created (not deleted):
             - <output_file>.x509.conf - Certificate configuration template
@@ -404,6 +415,18 @@ class ROMImageGenerator:
         """
         # Build certificate template
         cert_template = self.builder.build_template()
+
+        # Validate output against the trusted build directory
+        output_file = _safe_output_path(output_file, build_dir)
+        key_file = os.path.realpath(key_file)
+
+        # Validate all inputs before touching the filesystem
+        if not key_file.lower().endswith(".pem"):
+            raise ValueError(f"Key file {key_file!r} must have a .pem extension")
+        if not os.path.isfile(key_file):
+            raise FileNotFoundError(f"Key file not found: {key_file}")
+        if self.builder.sha_type not in SHA.OIDS:
+            raise ValueError(f"Unsupported SHA type: {self.builder.sha_type!r}")
 
         # Create certificate artifacts in build directory (same dir as output)
         # These are kept as build artifacts, not deleted
@@ -514,6 +537,12 @@ def main() -> int:
         type=str,
         required=True,
         help="Output file combined ROM image",
+    )
+    parser.add_argument(
+        "--build-dir",
+        type=str,
+        required=True,
+        help="CMake build directory (trusted base for output path validation)",
     )
 
     # Optional arguments
@@ -627,7 +656,7 @@ def main() -> int:
 
         # Generate ROM image
         generator = ROMImageGenerator(builder)
-        generator.generate(args.key, args.rom_image)
+        generator.generate(args.key, args.rom_image, args.build_dir)
 
     except Exception as e:  # noqa: BLE001
         print(f"Error: {e}")
