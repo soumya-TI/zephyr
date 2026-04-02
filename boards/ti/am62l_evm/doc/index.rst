@@ -66,7 +66,7 @@ The AM62L SoC uses a dual-stage boot architecture:
 
 **Stage 1: tiboot3.bin**
    - Loaded by boot ROM from boot media (SD/eMMC/OSPI)
-   - Contains SPL/BL1 (first-stage bootloader) from TF-A
+   - Contains BL1 (first-stage bootloader) from TF-A
    - Contains TIFS (TI Foundation Security firmware)
    - Contains board configuration (security, power, resource management)
    - Initializes SRAM, validates TIFS, loads Stage 2 into DDR
@@ -79,86 +79,92 @@ The AM62L SoC uses a dual-stage boot architecture:
 Building Boot Images
 ====================
 
+Boot image generation (``tispl.bin``, ``tiboot3.bin``) is **not enabled by default**.
+The TF-A revision bundled with Zephyr does not include AM62Lx board support. AM62Lx
+board support is available in upstream TF-A, which must be configured separately in
+``west.yml``.
+
+A standard build without any extra flags produces only the Zephyr application binary:
+
+.. zephyr-app-commands::
+   :tool: west
+   :app: samples/hello_world
+   :board: am62l_evm/am62l3/a53
+   :goals: build
+   :compact:
+
 Prerequisites
 -------------
 
-For BL1 boot and SCMI support, ARM Trusted Firmware-A is required.
+Boot image generation requires ARM Trusted Firmware-A with AM62Lx support. Update
+``west.yml`` to use upstream TF-A before enabling boot image generation, then run
+``west update``:
 
-Apply the following patch to ``west.yml`` to use the upstream TF-A master branch:
+.. code-block:: yaml
 
-.. code-block:: diff
-
-   diff --git a/west.yml b/west.yml
-   index 1234567..abcdefg 100644
-   --- a/west.yml
-   +++ b/west.yml
-   @@ -408,6 +408,7 @@
-        - name: trusted-firmware-a
-   +      url: https://github.com/ARM-software/arm-trusted-firmware.git
-   -      revision: 44bcc378b6ec4af8693d008f43983e488f1f5740
-   +      revision: master
-          path: modules/tee/tf-a/trusted-firmware-a
-          groups:
-            - tee
-
-After applying this patch, run ``west update`` to fetch the upstream TF-A with
-SCMI and BL1 boot support.
+   - name: trusted-firmware-a
+     url: https://review.trustedfirmware.org/TF-A/trusted-firmware-a
+     revision: master
+     path: modules/tee/tf-a/trusted-firmware-a
+     groups:
+       - tee
 
 Building
 --------
 
-**Default Build Behavior**
+**Generating tiboot3.bin (Stage 1)**
 
-The AM62L EVM board configuration automatically enables :kconfig:option:`CONFIG_TI_K3_BUILD_TISPL` by default,
-so a standard build generates both the Zephyr application binary and the ``tispl.bin`` boot image:
+Enable :kconfig:option:`CONFIG_BUILD_WITH_TFA` and :kconfig:option:`CONFIG_TI_K3_BUILD_TIBOOT3`
+to generate the ``tiboot3.bin`` Stage 1 bootloader (BL1 + TIFS + board configs):
 
 .. zephyr-app-commands::
    :tool: west
    :app: samples/hello_world
    :board: am62l_evm/am62l3/a53
    :goals: build
+   :gen-args: -DCONFIG_BUILD_WITH_TFA=y -DCONFIG_TI_K3_BUILD_TIBOOT3=y
    :compact:
 
-This generates:
-- ``build/zephyr/zephyr.bin`` - Zephyr application binary
-- ``build/zephyr/tispl.bin`` - Combined boot image (TF-A BL31 + Zephyr)
-- ``build/zephyr/bl31.bin`` - TF-A BL31 binary (intermediate artifact)
+**Generating tispl.bin (Stage 2)**
 
-**Generating tiboot3.bin**
-
-To also generate ``tiboot3.bin`` (Stage 1 bootloader), enable :kconfig:option:`CONFIG_TI_K3_BUILD_TIBOOT3`:
+Enable :kconfig:option:`CONFIG_BUILD_WITH_TFA` and :kconfig:option:`CONFIG_TI_K3_BUILD_TISPL`
+to generate the ``tispl.bin`` boot image (TF-A BL31 + Zephyr):
 
 .. zephyr-app-commands::
    :tool: west
    :app: samples/hello_world
    :board: am62l_evm/am62l3/a53
    :goals: build
-   :gen-args: -DCONFIG_TI_K3_BUILD_TIBOOT3=y
+   :gen-args: -DCONFIG_BUILD_WITH_TFA=y -DCONFIG_TI_K3_BUILD_TISPL=y
    :compact:
 
-**Disabling Boot Image Generation**
-
-To build only the Zephyr binary without boot images, disable :kconfig:option:`CONFIG_TI_K3_BUILD_TISPL`:
+To generate both boot images in a single build:
 
 .. zephyr-app-commands::
    :tool: west
    :app: samples/hello_world
    :board: am62l_evm/am62l3/a53
    :goals: build
-   :gen-args: -DCONFIG_TI_K3_BUILD_TISPL=n
+   :gen-args: -DCONFIG_BUILD_WITH_TFA=y -DCONFIG_TI_K3_BUILD_TISPL=y -DCONFIG_TI_K3_BUILD_TIBOOT3=y
    :compact:
 
 When boot image generation is enabled, the build system will automatically:
 
 1. Build ARM Trusted Firmware-A (BL31, and BL1 if generating tiboot3.bin)
 2. Generate board configuration blobs
-3. Create tispl.bin (Stage 2 with TF-A BL31 + Zephyr app) - **if CONFIG_TI_K3_BUILD_TISPL=y**
-4. Create tiboot3.bin (Stage 1 bootloader) - **if CONFIG_TI_K3_BUILD_TIBOOT3=y**
+3. Create ``tiboot3.bin`` (Stage 1 bootloader) - **if CONFIG_TI_K3_BUILD_TIBOOT3=y**
+4. Create ``tispl.bin`` (Stage 2 with TF-A BL31 + Zephyr app) - **if CONFIG_TI_K3_BUILD_TISPL=y**
 
 Generated Boot Files
 ====================
 
-After a default build, the following files are generated (since :kconfig:option:`CONFIG_TI_K3_BUILD_TISPL` is enabled by default):
+A default build (no boot image flags) generates:
+
+.. code-block:: console
+
+   build/zephyr/zephyr.bin     # Zephyr application binary
+
+With :kconfig:option:`CONFIG_TI_K3_BUILD_TISPL` enabled:
 
 .. code-block:: console
 
@@ -166,11 +172,11 @@ After a default build, the following files are generated (since :kconfig:option:
    build/zephyr/tispl.bin      # Stage 2 boot image (TF-A BL31 + Zephyr)
    build/zephyr/bl31.bin       # TF-A BL31 binary (intermediate)
 
-When :kconfig:option:`CONFIG_TI_K3_BUILD_TIBOOT3` is also enabled, additional files are generated:
+With :kconfig:option:`CONFIG_TI_K3_BUILD_TIBOOT3` also enabled:
 
 .. code-block:: console
 
-   build/zephyr/tiboot3.bin    # Stage 1 bootloader (SPL + TIFS + board configs)
+   build/zephyr/tiboot3.bin    # Stage 1 bootloader (BL1 + TIFS + board configs)
    build/zephyr/bl1.bin        # TF-A BL1 binary (intermediate)
 
 Booting from SD Card
@@ -185,15 +191,15 @@ This method boots Zephyr directly using only the generated boot images.
 
 **Build Requirements:**
 
-To use direct boot, both ``tiboot3.bin`` and ``tispl.bin`` are required. Since ``tispl.bin`` is generated by default,
-you only need to enable ``tiboot3.bin`` generation:
+To use direct boot, both ``tiboot3.bin`` and ``tispl.bin`` are required. Enable both
+boot image configurations explicitly:
 
 .. code-block:: console
 
    west build -b am62l_evm/am62l3/a53 samples/hello_world -- \
+     -DCONFIG_BUILD_WITH_TFA=y \
+     -DCONFIG_TI_K3_BUILD_TISPL=y \
      -DCONFIG_TI_K3_BUILD_TIBOOT3=y
-
-This generates both boot images (``tispl.bin`` is already enabled by default in the board configuration).
 
 **Preparation:**
 
@@ -211,7 +217,7 @@ This generates both boot images (``tispl.bin`` is already enabled by default in 
 
 .. code-block:: text
 
-   Boot ROM → tiboot3.bin (SPL + TIFS) → tispl.bin (TF-A + Zephyr)
+   Boot ROM → tiboot3.bin (BL1 + TIFS) → tispl.bin (TF-A + Zephyr)
                                                            ↓
                                                     Zephyr Running
 
@@ -221,16 +227,6 @@ The boot ROM loads ``tiboot3.bin``, which initializes the hardware and loads
 
 Option 2: U-Boot-Based Boot
 ============================
-
-CPSW3G (Common Platform Switch) Ethernet Switch
------------------------------------------------
-
-The CPSW3G Ethernet Switch integrated in the SoC has two 1 Gbps capable MAC Ports
-which are brought out on the board and interface with the DP83867 Ethernet PHY.
-CPSW3G enables Ethernet functionality on the board.
-
-SD Card
-*******
 
 Download TI's official `WIC`_ and flash the WIC file with an etching software
 onto an SD-card.
@@ -291,35 +287,15 @@ The path is relative to the Zephyr base directory. The key must be RSA 2048-bit 
 TF-A Build Configuration
 =========================
 
-The following Kconfig options control TF-A build and artifact path handling:
+The following Kconfig option controls the TF-A build target board:
 
 **CONFIG_TFA_TARGET_BOARD**
-  TF-A TARGET_BOARD parameter (string, default: "am62lx" for AM62L)
+  TF-A TARGET_BOARD parameter (string, default: "am62lx-evm" for AM62L)
 
   This specifies the board name passed to TF-A's build system via the TARGET_BOARD parameter.
-
-**CONFIG_TFA_ARTIFACT_SUBDIR**
-  Enable TF-A board-specific artifact subdirectory (bool, default: n)
-
-  This option determines the TF-A artifact path structure:
-
-  - When **disabled** (default): Uses platform-only path pattern:
-    ``build/tfa/${PLATFORM}/${BUILD_TYPE}/``
-    (e.g., ``build/tfa/k3/${release,debug}/``)
-
-  - When **enabled**: Uses board-specific path pattern:
-    ``build/tfa/${PLATFORM}/${TARGET_BOARD}/${BUILD_TYPE}/``
-    (e.g., ``build/tfa/k3/lite/${release,debug}/``)
-
-  Enable this when your TF-A build creates board-specific subdirectories (common with
-  out-of-tree TF-A platforms that use TARGET_BOARD).
-
-  Example - Enable board-specific artifact paths:
-
-  .. code-block:: kconfig
-
-     CONFIG_TFA_TARGET_BOARD="am62lx-evm"
-     CONFIG_TFA_ARTIFACT_SUBDIR=y
+  TF-A artifacts are always placed under a board-specific subdirectory:
+  ``build/tfa/${PLATFORM}/${TARGET_BOARD}/${BUILD_TYPE}/``
+  (e.g., ``build/tfa/k3/am62lx-evm/release/``)
 
 Boot Image Structure
 =====================
@@ -331,7 +307,7 @@ Boot Image Structure
    +------------------+
    | X.509 Certificate|  (Signed with RSA key)
    +------------------+
-   | SPL/BL1 Binary   |  (TF-A first stage)
+   | BL1 Binary       |  (TF-A first stage)
    +------------------+
    | TIFS Firmware    |  (System firmware)
    +------------------+
