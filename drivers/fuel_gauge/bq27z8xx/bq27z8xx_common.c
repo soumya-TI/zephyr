@@ -228,38 +228,16 @@ int bq27z8xx_df_read(const struct device *dev, uint16_t addr, uint8_t *buf, uint
 		return -EINVAL;
 	}
 
-	const struct bq27z8xx_config *cfg = dev->config;
+	int ret = -EIO;
 
-	/* Write DF address to 0x3E to initiate the block read. */
-	int ret = bq27z8xx_write16(dev, BQ27Z8XX_ALTMANUFACTURERACCESS, addr);
-
+	/*
+	 * Treat this as a 32-byte MAC read command, this is done with the address
+	 * of the data flash segment as the payload.
+	 */
+	ret = bq27z8xx_read_mac(dev, addr, buf, len, K_NO_WAIT);
 	if (ret != 0) {
 		return ret;
 	}
-
-	/*
-	 * Wait for the device to fetch the DF block from flash.
-	 * Unlike MAC command reads, DF reads do not echo the address back into
-	 * the 0x3E register.  The 32-byte payload is available at MACDATA (0x40)
-	 * after the device has finished loading the block.
-	 */
-	k_sleep(K_MSEC(250));
-
-	/*
-	 * Read 32 bytes of DF data from MACDATA (0x40).
-	 * This mirrors bq27z8xx_df_read_next(), which also reads raw payload
-	 * bytes without an address echo.
-	 */
-	uint8_t raw[BQ27Z8XX_MAC_DATA_LEN];
-
-	ret = i2c_burst_read_dt(&cfg->i2c, BQ27Z8XX_MACDATA, raw, sizeof(raw));
-	if (ret != 0) {
-		return ret;
-	}
-
-	/* buf[0] = payload length; buf[1..] = DF data bytes. */
-	buf[0] = BQ27Z8XX_MAC_DATA_LEN;
-	memcpy(&buf[1], raw, MIN((size_t)len, (size_t)BQ27Z8XX_MAC_DATA_LEN));
 
 	return 0;
 }
@@ -275,34 +253,15 @@ int bq27z8xx_df_write(const struct device *dev, uint16_t addr, const uint8_t *da
 		return -EINVAL;
 	}
 
-	const struct bq27z8xx_config *cfg = dev->config;
-
-	/*
-	 * Single I2C write to 0x3E with address and data bundled:
-	 *   [reg=0x3E, addr_lo, addr_hi, data_byte_0 .. data_byte_N-1]
-	 *
-	 * After a DF write the device programs internal flash, during which it
-	 * will NACK subsequent I2C transactions.  Retry up to 3 times with a
-	 * 25 ms gap to ride out any flash-busy window from a prior write, then
-	 * wait an additional 25 ms after a successful write so the device
-	 * finishes flash programming before the caller issues the next command.
-	 */
-	uint8_t buf[1 + 2 + BQ27Z8XX_MAC_DATA_LEN];
-
-	buf[0] = BQ27Z8XX_ALTMANUFACTURERACCESS;
-	sys_put_le16(addr, &buf[1]);
-	if (data_len > 0) {
-		memcpy(&buf[3], data, data_len);
-	}
-
 	int ret = -EIO;
 
-	ret = i2c_write_dt(&cfg->i2c, buf, 1 + 2 + data_len);
-
-	/* Post-write delay for the time it takes the device to write to data flash */
-	if (ret == 0) {
-		k_sleep(K_MSEC(25));
+	ret = bq27z8xx_write_mac(dev, addr, data, data_len);
+	if (ret != 0) {
+		return ret;
 	}
+
+	/* Sleep to allow dataflash write to take effect */
+	k_sleep(K_MSEC(40));
 
 	return ret;
 }
@@ -312,10 +271,11 @@ int bq27z8xx_df_read_next(const struct device *dev, uint8_t *buf, uint8_t len)
 	const struct bq27z8xx_config *cfg = dev->config;
 
 	/*
-	 * Read 32 bytes from register 0x44.  The device auto-increments its
-	 * internal DF address by 32 on each call; no address write is needed.
+	 * The device auto-increments its internal DF address by 32 on each call;
+	 * no address write is needed. Can still read address from 0x3E, and Checksum/Length
+	 * from 0x60 and 0x61.
 	 */
-	uint8_t raw[BQ27Z8XX_MAC_DATA_LEN];
+	uint8_t raw[BQ27Z8XX_MAC_DATA_LEN + 4];
 	int ret = i2c_burst_read_dt(&cfg->i2c, BQ27Z8XX_MACDATANEXT, raw, sizeof(raw));
 
 	if (ret != 0) {

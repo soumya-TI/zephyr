@@ -51,8 +51,8 @@ enum bq27z8xx_regs {
 						* Unit: mAh, Range: 0..32767
 						*/
 	BQ27Z8XX_ALTMANUFACTURERACCESS = 0x3E, /* R/W */
+	BQ27Z8XX_MACDATANEXT = 0x3E,           /* R/O, Next 32-byte DF block (auto-increment) */
 	BQ27Z8XX_MACDATA = 0x40,               /* R/O, MAC data */
-	BQ27Z8XX_MACDATANEXT = 0x44,           /* R/O, Next 32-byte DF block (auto-increment) */
 	BQ27Z8XX_MACDATASUM = 0x60,            /* R/O, Checksum over MAC command and data */
 	BQ27Z8XX_MACDATALEN = 0x61,            /* R/O, Length of the MAC data */
 	BQ27Z8XX_VOLTHISETTHRESHOLD = 0x62,    /* R/W, Unit: mV, Range: 0..5000 */
