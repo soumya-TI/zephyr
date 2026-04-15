@@ -477,7 +477,8 @@ static DEVICE_API(uart, uart_mspm0_driver_api) = {
                                                                                                    \
 	PINCTRL_DT_INST_DEFINE(index);                                                             \
                                                                                                    \
-	MSPM0_CLOCK_SUBSYS_FN(index);                                                              \
+	static const struct mspm0_sys_clock mspm0_uart_sys_clock##index =                          \
+		MSPM0_CLOCK_SUBSYS_FN(index);		                                           \
                                                                                                    \
 	MSP_UART_IRQ_DEFINE(index);                                                                \
                                                                                                    \
