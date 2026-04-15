@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2023, ithinx GmbH
- * Copyright (c) 2023, Tonies GmbH
+
  * Copyright (c) 2026, Texas Instruments Incorporated
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -15,8 +14,8 @@
  *   lifetime     — lifetime data block dump
  *   serial       — device serial number
  *   ra_table     — resistance adjustment table dump
- *   reg_read     — raw SBS register read (1–32 bytes)
- *   reg_write    — raw SBS register write (1–32 bytes)
+ *   reg_read     — raw SBS register read (1–32 bytes), optionally at arbitrary I2C address
+ *   reg_write    — raw SBS register write (1–32 bytes), optionally at arbitrary I2C address
  *   mac_write    — MAC write command with optional data payload
  *   read         — raw MAC / data-flash hex dump
  *   seal         — send the SEAL command
@@ -2054,19 +2053,41 @@ static int cmd_bq27z8xx_reg_read(const struct shell *sh, size_t argc, char **arg
 
 	uint8_t reg = (uint8_t)reg_ul;
 	int len = 2;
+	uint16_t addr = 0;
 
-	if (argc > 3) {
-		len = (int)shell_strtoul(argv[3], 0, &err);
+	/* Check for optional address and length arguments */
+	int arg_idx = 3;
+	if (argc > arg_idx) {
+		unsigned long addr_ul = shell_strtoul(argv[arg_idx], 16, &err);
+		if (!err && addr_ul <= 0x7F) {
+			/* Looks like an address, consume it */
+			addr = (uint16_t)addr_ul;
+			arg_idx++;
+		}
+	}
+	if (argc > arg_idx) {
+		len = (int)shell_strtoul(argv[arg_idx], 0, &err);
 		if (err || len < 1 || len > MAC_DATA_LEN) {
-			shell_error(sh, "Invalid byte count: %s (must be 1-%d)", argv[3],
+			shell_error(sh, "Invalid byte count: %s (must be 1-%d)", argv[arg_idx],
 				    MAC_DATA_LEN);
 			return -EINVAL;
 		}
 	}
 
 	const struct bq27z8xx_config *cfg = dev->config;
+	struct i2c_dt_spec i2c_spec;
+
+	if (addr != 0) {
+		/* Use custom address */
+		i2c_spec = cfg->i2c;
+		i2c_spec.addr = addr;
+	} else {
+		/* Use device's address */
+		i2c_spec = cfg->i2c;
+	}
+
 	uint8_t buf[MAC_DATA_LEN];
-	int ret = i2c_burst_read_dt(&cfg->i2c, reg, buf, len);
+	int ret = i2c_burst_read_dt(&i2c_spec, reg, buf, len);
 
 	if (ret != 0) {
 		shell_error(sh, "REG read failed: %d", ret);
@@ -2107,7 +2128,20 @@ static int cmd_bq27z8xx_reg_write(const struct shell *sh, size_t argc, char **ar
 	}
 
 	uint8_t reg = (uint8_t)reg_ul;
-	int data_len = (int)argc - 3;
+	uint16_t addr = 0;
+
+	/* Check for optional address argument */
+	int data_start_idx = 3;
+	if (argc > data_start_idx) {
+		unsigned long addr_ul = shell_strtoul(argv[data_start_idx], 16, &err);
+		if (!err && addr_ul <= 0x7F) {
+			/* Looks like an address, consume it */
+			addr = (uint16_t)addr_ul;
+			data_start_idx++;
+		}
+	}
+
+	int data_len = (int)argc - data_start_idx;
 
 	if (data_len < 1 || data_len > MAC_DATA_LEN) {
 		shell_error(sh, "Need 1-%d data bytes", MAC_DATA_LEN);
@@ -2115,7 +2149,7 @@ static int cmd_bq27z8xx_reg_write(const struct shell *sh, size_t argc, char **ar
 	}
 
 	uint8_t data[MAC_DATA_LEN];
-	int n = parse_hex_bytes(sh, &argv[3], data_len, data, MAC_DATA_LEN);
+	int n = parse_hex_bytes(sh, &argv[data_start_idx], data_len, data, MAC_DATA_LEN);
 
 	if (n < 0) {
 		return n;
@@ -2127,7 +2161,18 @@ static int cmd_bq27z8xx_reg_write(const struct shell *sh, size_t argc, char **ar
 	memcpy(&buf[1], data, data_len);
 
 	const struct bq27z8xx_config *cfg = dev->config;
-	int ret = i2c_write_dt(&cfg->i2c, buf, 1 + data_len);
+	struct i2c_dt_spec i2c_spec;
+
+	if (addr != 0) {
+		/* Use custom address */
+		i2c_spec = cfg->i2c;
+		i2c_spec.addr = addr;
+	} else {
+		/* Use device's address */
+		i2c_spec = cfg->i2c;
+	}
+
+	int ret = i2c_write_dt(&i2c_spec, buf, 1 + data_len);
 
 	if (ret != 0) {
 		shell_error(sh, "REG write failed: %d", ret);
@@ -2336,10 +2381,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_bq27z8xx,
 	SHELL_CMD_ARG(ra_table, &dsub_pos_bq27z8xx_device_name,
 		      "<device_name> [tsv]", cmd_bq27z8xx_ra_table, 2, 1),
 	SHELL_CMD_ARG(reg_read, &dsub_pos_bq27z8xx_device_name,
-		      "<device_name> <reg_hex> [bytes]", cmd_bq27z8xx_reg_read, 3, 1),
+		      "<device_name> <reg_hex> [addr_7bit] [bytes]", cmd_bq27z8xx_reg_read, 3, MAC_DATA_LEN + 2),
 	SHELL_CMD_ARG(reg_write, &dsub_pos_bq27z8xx_device_name,
-		      "<device_name> <reg_hex> <byte_hex> [byte_hex ...]",
-		      cmd_bq27z8xx_reg_write, 4, MAC_DATA_LEN - 1),
+		      "<device_name> <reg_hex> [addr_7bit] <byte_hex> [byte_hex ...]",
+		      cmd_bq27z8xx_reg_write, 4, MAC_DATA_LEN + 2),
 	SHELL_CMD_ARG(mac_write, &dsub_pos_bq27z8xx_device_name,
 		      "<device_name> <cmd_hex> [byte_hex ...]",
 		      cmd_bq27z8xx_mac_write, 3, MAC_DATA_LEN),
