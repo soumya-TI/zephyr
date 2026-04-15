@@ -28,6 +28,7 @@
 		zephyr,shell-uart = &uart0;
 		zephyr,code-partition = &slot0_partition;
 		zephyr,flash-controller = &flashctl;
+		zephyr,system-timer-companion = &counterg0;
 	};
 
 	leds {
