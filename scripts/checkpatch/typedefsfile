@@ -9,3 +9,4 @@ Pwm
 FILE
 NRF_GPIO_Type
 EIM_Type
+UNICOMM_Inst_Regs
