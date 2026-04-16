@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Texas Instruments
+ * Copyright (c) 2026 Texas Instruments
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -35,9 +35,6 @@ LOG_MODULE_REGISTER(i2c_mspm0, CONFIG_I2C_LOG_LEVEL);
 	 DL_I2C_INTERRUPT_TARGET_START | DL_I2C_INTERRUPT_TARGET_STOP |                            \
 	 DL_I2C_INTERRUPT_TIMEOUT_A)
 
-#define I2C_PROP(index, prop)     DT_INST_PROP(index, prop)
-#define I2C_HAS_PROP(index, prop) DT_INST_NODE_HAS_PROP(index, prop)
-
 enum i2c_mspm0_state {
 	I2C_MSPM0_IDLE,
 	I2C_MSPM0_TX_STARTED,
@@ -68,7 +65,7 @@ struct i2c_mspm0_config {
 struct i2c_mspm0_data {
 	uint32_t dev_config;
 	volatile enum i2c_mspm0_state state;
-	struct k_sem i2c_busy_sem;
+	struct k_sem i2c_lock;
 	struct k_sem device_sync_sem;
 	uint32_t transfer_count;
 	uint32_t transfer_len;
@@ -136,7 +133,7 @@ static int i2c_mspm0_configure(const struct device *dev, uint32_t dev_config)
 		return -EINVAL;
 	}
 
-	k_sem_take(&data->i2c_busy_sem, K_FOREVER);
+	k_sem_take(&data->i2c_lock, K_FOREVER);
 
 	/* Config I2C speed */
 	switch (I2C_SPEED_GET(dev_config)) {
@@ -197,7 +194,7 @@ static int i2c_mspm0_configure(const struct device *dev, uint32_t dev_config)
 	DL_I2C_enableController(config->base);
 
 sem_give:
-	k_sem_give(&data->i2c_busy_sem);
+	k_sem_give(&data->i2c_lock);
 	return ret;
 }
 
@@ -209,7 +206,7 @@ static int i2c_mspm0_init(const struct device *dev)
 	uint32_t speed_config;
 
 	/* initialize semaphores */
-	k_sem_init(&data->i2c_busy_sem, 1, 1);
+	k_sem_init(&data->i2c_lock, 1, 1);
 	k_sem_init(&data->device_sync_sem, 0, 1);
 
 	/* Init power */
@@ -401,11 +398,11 @@ static int i2c_mspm0_transfer(const struct device *dev, struct i2c_msg *msgs, ui
 	struct i2c_msg transaction_msg;
 	int ret = 0;
 
-	k_sem_take(&data->i2c_busy_sem, K_FOREVER);
+	k_sem_take(&data->i2c_lock, K_FOREVER);
 
 	if (data->is_target) {
 		/* Currently target is registered, initiating transfer is not allowed */
-		k_sem_give(&data->i2c_busy_sem);
+		k_sem_give(&data->i2c_lock);
 		return -EBUSY;
 	}
 
@@ -494,7 +491,7 @@ static int i2c_mspm0_target_register(const struct device *dev, struct i2c_target
 
 	data->target_config = cfg;
 	data->target_callbacks = cfg->callbacks;
-	k_sem_take(&data->i2c_busy_sem, K_FOREVER);
+	k_sem_take(&data->i2c_lock, K_FOREVER);
 
 	if (data->state == I2C_MSPM0_TARGET_PREEMPTED) {
 		DL_I2C_clearInterruptStatus(config->base, TI_MSPM0_TARGET_INTERRUPTS);
@@ -518,7 +515,7 @@ static int i2c_mspm0_target_register(const struct device *dev, struct i2c_target
 	data->is_target = true;
 	data->state = I2C_MSPM0_IDLE;
 
-	k_sem_give(&data->i2c_busy_sem);
+	k_sem_give(&data->i2c_lock);
 	return 0;
 }
 
@@ -533,12 +530,12 @@ static int i2c_mspm0_target_unregister(const struct device *dev, struct i2c_targ
 
 	data->target_config = NULL;
 	data->is_target = false;
-	k_sem_take(&data->i2c_busy_sem, K_FOREVER);
+	k_sem_take(&data->i2c_lock, K_FOREVER);
 
 	DL_I2C_disableTarget(config->base);
 	DL_I2C_disableInterrupt(config->base, TI_MSPM0_TARGET_INTERRUPTS);
 
-	k_sem_give(&data->i2c_busy_sem);
+	k_sem_give(&data->i2c_lock);
 	return 0;
 }
 
@@ -691,7 +688,7 @@ static void i2c_mspm0_isr_target(const struct device *dev)
 			data->target_callbacks->stop(data->target_config);
 		}
 		i2c_mspm0_reset_target(dev);
-		k_sem_give(&data->i2c_busy_sem);
+		k_sem_give(&data->i2c_lock);
 		break;
 	default:
 		break;
@@ -753,7 +750,7 @@ static inline void i2c_mspm0_isr_controller(const struct device *dev)
 		DL_I2C_clearInterruptStatus(config->base, TI_MSPM0_CONTROLLER_INTERRUPTS);
 		DL_I2C_flushControllerTXFIFO(config->base);
 	case DL_I2C_IIDX_CONTROLLER_STOP:
-		k_sem_give(&data->i2c_busy_sem);
+		k_sem_give(&data->i2c_lock);
 	default:
 		break;
 	}
