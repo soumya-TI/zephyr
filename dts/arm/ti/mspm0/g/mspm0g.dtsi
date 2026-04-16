@@ -38,22 +38,6 @@
 			#io-channel-cells = <1>;
 		};
 
-		timg0: timg0@40084000 {
-			compatible = "ti,mspm0-timer";
-			reg = <0x40084000 0x2000>;
-			clocks = <&ckm MSPM0_CLOCK_LFCLK>;
-			interrupts = <16 0>;
-			ti,clk-prescaler = <255>;
-			ti,clk-div = <1>;
-			status = "disabled";
-
-			counterg0: counterg0 {
-				compatible = "ti,mspm0-timer-counter";
-				resolution = <16>;
-				status = "disabled";
-			};
-		};
-
 		timg6: timg6@40868000 {
 			compatible = "ti,mspm0-timer";
 			reg = <0x40868000 0x2000>;
