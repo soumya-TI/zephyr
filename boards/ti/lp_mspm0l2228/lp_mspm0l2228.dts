@@ -95,4 +95,10 @@
 	pinctrl-0 = <&i2c0_scl_pa01 &i2c0_sda_pa0>;
 	pinctrl-names = "default";
 	status = "disabled";
+}; 
+
+&vref0 {
+	status = "okay";
+	pinctrl-0 = <&analog_pa23>;
+	pinctrl-names = "default";
 };
