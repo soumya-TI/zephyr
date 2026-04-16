@@ -1,0 +1,12 @@
+sample:
+  name: TI BQ27Z8XX Fuel Gauge Sample
+tests:
+  sample.sensor.ti_bq27z8xx:
+    build_only: true
+    platform_allow:
+      - native_sim
+      - native_sim/native/64bit
+      - lp_mspm0g3507
+    integration_platforms:
+      - native_sim
+    tags: fuel_gauge ti bq27z8xx bq27z855 bq27z758

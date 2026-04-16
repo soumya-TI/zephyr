@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2023, ithinx GmbH
+ * Copyright (c) 2023, Tonies GmbH
+ * Copyright (c) 2026, Texas Instruments Incorporated
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	aliases {
+		fuel-gauge0 = &bq27z8xx;
+	};
+
+	i2c_emul_bus: i2c@100 {
+		compatible = "zephyr,i2c-emul-controller";
+		status = "okay";
+		reg = <0x100 0x10>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clock-frequency = <100000>;
+
+		/*
+		 * BQ27Z8XX emulator.  The device-type property selects which
+		 * variant the emulator presents:
+		 *   device-type = "bq27z855"  (default when omitted)
+		 *   device-type = "bq27z758"
+		 */
+		bq27z8xx: bq27z8xx@55 {
+			compatible = "ti,bq27z8xx";
+			status = "okay";
+			reg = <0x55>;
+			device-type = "bq27z855";
+		};
+	};
+};
