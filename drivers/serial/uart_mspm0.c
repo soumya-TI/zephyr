@@ -68,7 +68,10 @@ static void uart_mspm0_poll_out(const struct device *dev, unsigned char c)
 {
 	const struct uart_mspm0_config *config = dev->config;
 
-	DL_UART_Main_transmitDataBlocking(config->regs, c);
+	while (DL_UART_Main_isTXFIFOFull(config->regs)) {
+	}
+
+	DL_UART_Main_transmitData(config->regs, c);
 }
 
 static int uart_mspm0_install_configuration(const struct device *dev)
