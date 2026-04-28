@@ -11,6 +11,9 @@
 #include <zephyr/drivers/clock_control/mspm0_clock_control.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/pm/device.h>
+#include <zephyr/pm/policy.h>
+#include <zephyr/pm/device_runtime.h>
 #include <zephyr/dt-bindings/i2c/i2c.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -21,6 +24,7 @@
 
 /* Driverlib includes */
 #include <ti/driverlib/dl_i2c.h>
+#include <ti/driverlib/driverlib.h>
 
 LOG_MODULE_REGISTER(i2c_mspm0, CONFIG_I2C_LOG_LEVEL);
 
@@ -408,11 +412,25 @@ static int i2c_mspm0_transfer(const struct device *dev, struct i2c_msg *msgs, ui
 	struct i2c_msg transaction_msg;
 	int ret = 0;
 
+#ifdef CONFIG_PM_DEVICE
+#ifdef CONFIG_PM_DEVICE_RUNTIME
+	/* Prevent device from entering sleep state until transaction is complete */
+	pm_device_runtime_get(dev);
+#endif
+	pm_policy_state_all_lock_get();
+#endif
 	k_sem_take(&data->i2c_lock, K_FOREVER);
 
 	if (data->is_target) {
 		/* Currently target is registered, initiating transfer is not allowed */
 		k_sem_give(&data->i2c_lock);
+#ifdef CONFIG_PM_DEVICE
+#ifdef CONFIG_PM_DEVICE_RUNTIME
+		pm_device_runtime_put(dev);
+#endif
+		/* Allow device to enter sleep state */
+		pm_policy_state_all_lock_put();
+#endif
 		return -EBUSY;
 	}
 
@@ -525,6 +543,17 @@ static int i2c_mspm0_target_register(const struct device *dev, struct i2c_target
 	data->is_target = true;
 	data->state = I2C_MSPM0_IDLE;
 
+#ifdef CONFIG_PM_DEVICE
+	/* Allow operation only down to STOP0 for I2C targets */
+
+	/* Lock STANDBY Operation */
+	pm_policy_state_lock_get(PM_STATE_STANDBY, PM_ALL_SUBSTATES);
+
+	/* Lock STOP1 and STOP2 Operation */
+	pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_IDLE, DL_SYSCTL_POWER_POLICY_STOP1);
+	pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_IDLE, DL_SYSCTL_POWER_POLICY_STOP2);
+#endif
+
 	k_sem_give(&data->i2c_lock);
 	return 0;
 }
@@ -544,6 +573,15 @@ static int i2c_mspm0_target_unregister(const struct device *dev, struct i2c_targ
 
 	DL_I2C_disableTarget(config->base);
 	DL_I2C_disableInterrupt(config->base, TI_MSPM0_TARGET_INTERRUPTS);
+
+#ifdef CONFIG_PM_DEVICE
+	/* Allow STANDBY Operation */
+	pm_policy_state_lock_put(PM_STATE_STANDBY, PM_ALL_SUBSTATES);
+
+	/* Allow STOP1 and STOP2 Operation */
+	pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, DL_SYSCTL_POWER_POLICY_STOP1);
+	pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, DL_SYSCTL_POWER_POLICY_STOP2);
+#endif
 
 	k_sem_give(&data->i2c_lock);
 	return 0;
@@ -761,6 +799,13 @@ static inline void i2c_mspm0_isr_controller(const struct device *dev)
 		DL_I2C_flushControllerTXFIFO(config->base);
 	case DL_I2C_IIDX_CONTROLLER_STOP:
 		k_sem_give(&data->i2c_lock);
+#ifdef CONFIG_PM_DEVICE
+#ifdef CONFIG_PM_DEVICE_RUNTIME
+		pm_device_runtime_put(dev);
+#endif
+		/* Allow device to enter sleep state once transaction is complete */
+		pm_policy_state_all_lock_put();
+#endif
 	default:
 		break;
 	}
