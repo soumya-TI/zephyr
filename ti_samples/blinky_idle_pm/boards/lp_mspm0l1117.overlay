@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) 2026 Texas Instruments
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+ 
+/ {
+	aliases {
+		led0 = &led0;
+	};
+
+	chosen {
+		zephyr,system-timer-companion = &counterg0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led0: led_0 {
+			gpios = <&gpiob 16 GPIO_ACTIVE_HIGH>;
+			label = "Blue LED";
+		};
+	};
+};
+
+&gpiob {
+	status = "okay";
+	zephyr,pm-device-runtime-auto;
+};
+
+&timg0 {
+	status = "okay";
+
+	counterg0 {
+		status = "okay";
+	};
+};
