@@ -86,7 +86,7 @@
 &canclk {
 	clocks = <&syspll>;
 	clock-frequency = <DT_FREQ_M(40)>;
-	status = "okay";
+	status = "disabled";
 };
 
 &pinctrl {
@@ -110,7 +110,7 @@
 };
 
 &canfd0 {
-	status = "okay";
+	status = "disabled";
 	pinctrl-0 = <&canfd0_cantx_pa12 &canfd0_canrx_pa13>;
 	pinctrl-names = "default";
 };
@@ -119,7 +119,7 @@
 	pinctrl-0 = <&i2c1_scl_pb2 &i2c1_sda_pb3>;
 	pinctrl-names = "default";
 	status = "disabled";
-}; 
+};
 
 &vref0 {
 	status = "okay";

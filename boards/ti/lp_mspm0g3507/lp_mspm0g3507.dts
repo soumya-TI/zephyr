@@ -68,7 +68,7 @@
 &canclk {
 	clocks = <&syspll>;
 	clock-frequency = <DT_FREQ_M(40)>;
-	status = "okay";
+	status = "disabled";
 };
 
 &flash0 {
@@ -122,21 +122,21 @@
 };
 
 &uart1 {
-	status = "okay";
+	status = "disabled";
 	current-speed = <115200>;
 	pinctrl-0 = <&uart1_tx_pa17 &uart1_rx_pa18>;
 	pinctrl-names = "default";
 };
 
 &uart2 {
-	status = "okay";
+	status = "disabled";
 	current-speed = <115200>;
 	pinctrl-0 = <&uart2_tx_pb15 &uart2_rx_pb16>;
 	pinctrl-names = "default";
 };
 
 &pwma0 {
-	status = "okay";
+	status = "disabled";
 
 	pinctrl-0 = <&tima0_ccp0_pa0>;
 	pinctrl-names = "default";
@@ -146,7 +146,7 @@
 };
 
 &canfd0 {
-	status = "okay";
+	status = "disabled";
 	pinctrl-0 = <&canfd0_cantx_pa12 &canfd0_canrx_pa13>;
 	pinctrl-names = "default";
 };
