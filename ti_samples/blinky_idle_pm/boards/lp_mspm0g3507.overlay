@@ -35,3 +35,29 @@
 		status = "okay";
 	};
 };
+
+
+&mfclk {
+	status = "okay";
+};
+
+&uart0 {
+	clocks = <&ckm MSPM0_CLOCK_MFCLK>;
+	current-speed = <460800>;
+};
+
+&stop1 {
+	status = "disabled";
+};
+
+&stop2 {
+	status = "disabled";
+};
+
+&stdby0 {
+	status = "disabled";
+};
+
+&stdby1 {
+	status = "disabled";
+};

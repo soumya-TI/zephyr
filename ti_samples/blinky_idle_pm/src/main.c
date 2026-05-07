@@ -12,7 +12,7 @@
 #include <ti/driverlib/driverlib.h>
 
 /* 1000 msec = 1 sec */
-#define SLEEP_TIME_MS   6
+#define SLEEP_TIME_MS   2000
 
 /* PA22 for CLK_OUT */
 #define GPIO_CLKOUT_PIN                                           DL_GPIO_PIN_22
@@ -47,6 +47,8 @@ int main(void)
 		return 0;
 	}
 
+	printf("Hello from TI\n");
+
 	while (1) {
 
 		ret = gpio_pin_toggle_dt(&led);
@@ -59,6 +61,7 @@ int main(void)
 		 * low-power mode. Timer interrupt wakes the system after 1000ms.
 		 */
 		k_msleep(SLEEP_TIME_MS);
+
 	}
 	return 0;
 }
