@@ -250,6 +250,7 @@ static int gpio_mspm0_pin_configure(const struct device *port,
 						 wakeup);
 		DL_GPIO_disableOutput(config->base, BIT(pin));
 		break;
+	case GPIO_INPUT | GPIO_OUTPUT:
 	case GPIO_OUTPUT:
 		DL_GPIO_initDigitalOutputFeatures(config->pincm_lut[pin],
 						  DL_GPIO_INVERSION_DISABLE,
@@ -260,7 +261,11 @@ static int gpio_mspm0_pin_configure(const struct device *port,
 						  DL_GPIO_HIZ_DISABLE);
 
 		/* port_get_raw reads DIN31_0, so output pins need the input buffer enabled. */
-		IOMUX->SECCFG.PINCM[config->pincm_lut[pin]] |= IOMUX_PINCM_INENA_ENABLE;
+		if(flags & GPIO_INPUT) {
+			IOMUX->SECCFG.PINCM[config->pincm_lut[pin]] |= IOMUX_PINCM_INENA_ENABLE;
+		} else {
+			IOMUX->SECCFG.PINCM[config->pincm_lut[pin]] &= ~(IOMUX_PINCM_INENA_ENABLE);
+		}
 
 		/* Set initial state */
 		if (flags & GPIO_OUTPUT_INIT_HIGH) {
@@ -276,6 +281,7 @@ static int gpio_mspm0_pin_configure(const struct device *port,
 			DL_GPIO_disableWakeUp(config->pincm_lut[pin]);
 		}
 		DL_GPIO_disableOutput(config->base, BIT(pin));
+		IOMUX->SECCFG.PINCM[config->pincm_lut[pin]] &= ~(IOMUX_PINCM_INENA_ENABLE);
 		break;
 	default:
 		return -ENOTSUP;
