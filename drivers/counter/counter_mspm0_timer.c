@@ -16,8 +16,6 @@
 #include <ti/driverlib/dl_timerg.h>
 #include <ti/driverlib/dl_timer.h>
 
-#include <zephyr/drivers/timer/system_timer.h>
-
 LOG_MODULE_REGISTER(mspm0_counter, CONFIG_COUNTER_LOG_LEVEL);
 
 struct counter_mspm0_data {
@@ -265,13 +263,6 @@ static void counter_mspm0_isr(void *arg)
 	} else if ((status == DL_TIMER_IIDX_LOAD) && data->top_cb) {
 		data->top_cb(dev, data->user_data_top);
 	}
-#if defined(CONFIG_SYSTEM_TIMER_LPM_COMPANION_COUNTER)
-	const struct device *idle_timer = DEVICE_DT_GET(SYSTEM_TIMER_COMPANION_NODE);
-	if(dev == idle_timer) {
-		uint32_t ticks_to_add = counter_mspm0_get_top_value(dev);
-		sys_clock_announce(ticks_to_add);
-	}
-#endif
 
 }
 
