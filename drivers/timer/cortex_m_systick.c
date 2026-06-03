@@ -208,9 +208,13 @@ static void idle_timer_alarm_stub(const struct device *dev, uint8_t chan_id,
  */
 void z_sys_clock_lpm_enter(uint64_t max_lpm_time_us)
 {
+	uint32_t alarm_ticks = counter_us_to_ticks(idle_timer, max_lpm_time_us);
+
+	alarm_ticks = CLAMP(alarm_ticks, 1U, counter_get_top_value(idle_timer));
+
 	struct counter_alarm_cfg cfg = {
 		.callback = idle_timer_alarm_stub,
-		.ticks = counter_us_to_ticks(idle_timer, max_lpm_time_us),
+		.ticks = alarm_ticks,
 		.user_data = NULL,
 		.flags = 0,
 	};
@@ -618,8 +622,19 @@ void sys_clock_idle_exit(void)
 		/* Update the cycle counter to include the cycles missed in idle */
 		cycle_count += missed_cycles;
 
-		/* Announce the passed ticks to the kernel */
+		/* Announce the passed ticks to the kernel.
+		 * When SysTick is reset by LPM, it was explicitly disabled
+		 * at LPM entry after elapsed() was already folded into
+		 * cycle_count. Calling elapsed() again here would return the
+		 * same stale frozen VAL and double-count the pre-sleep cycles.
+		 * In all other cases SysTick is still running, so elapsed()
+		 * gives any cycles accumulated since the last cycle_count update.
+		 */
+#if !defined(CONFIG_SYSTEM_TIMER_RESET_BY_LPM)
 		dcycles = cycle_count + elapsed() - announced_cycles;
+#else
+		dcycles = cycle_count - announced_cycles;
+#endif /* !CONFIG_SYSTEM_TIMER_RESET_BY_LPM */
 		dticks = dcycles / CYC_PER_TICK;
 		announced_cycles += dticks * CYC_PER_TICK;
 		sys_clock_announce(dticks);
