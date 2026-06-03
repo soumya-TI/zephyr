@@ -23,15 +23,54 @@
 	};
 };
 
+&gpioa {
+	status = "disabled";
+	zephyr,pm-device-runtime-auto;
+};
+
 &gpiob {
 	status = "okay";
 	zephyr,pm-device-runtime-auto;
 };
 
+&gpioc {
+	status = "disabled";
+};
+
 &timg0 {
 	status = "okay";
+	ti,clk-prescaler = <1>;
 
 	counterg0 {
 		status = "okay";
 	};
+};
+
+&mfclk {
+	status = "okay";
+};
+
+&uart0 {
+	clocks = <&ckm MSPM0_CLOCK_MFCLK>;
+	current-speed = <460800>;
+};
+
+&stop1 {
+	status = "disabled";
+};
+
+&stop2 {
+	status = "disabled";
+};
+
+&stdby0 {
+	status = "disabled";
+};
+
+&stdby1 {
+	status = "okay";
+};
+
+&vref0 {
+	status = "disabled";
 };
