@@ -92,6 +92,9 @@ static int counter_mspm0_set_top_value(const struct device *dev,
 					      DL_TIMER_INTERRUPT_LOAD_EVENT);
 		DL_Timer_enableInterrupt(config->base,
 					 DL_TIMER_INTERRUPT_LOAD_EVENT);
+	} else {
+		DL_Timer_disableInterrupt(config->base,
+					 DL_TIMER_INTERRUPT_LOAD_EVENT);
 	}
 
 	return 0;
@@ -129,19 +132,17 @@ static int counter_mspm0_set_alarm(const struct device *dev,
 	}
 
 	if ((COUNTER_ALARM_CFG_ABSOLUTE & alarm_cfg->flags) == 0) {
-		ticks += DL_Timer_getTimerCount(config->base);
-		if (ticks > top) {
-			ticks %= top;
-		}
+		ticks = ((uint64_t)ticks + DL_Timer_getTimerCount(config->base))%(top + 1);
 	}
+
+	DL_Timer_disableInterrupt(config->base, DL_TIMER_INTERRUPT_CC0_UP_EVENT);
+	DL_Timer_clearInterruptStatus(config->base, DL_TIMER_INTERRUPT_CC0_UP_EVENT);
 
 	data->alarm_cb = alarm_cfg->callback;
 	data->user_data = alarm_cfg->user_data;
 
 	DL_Timer_setCaptureCompareValue(config->base, ticks,
 					DL_TIMER_CC_0_INDEX);
-	DL_Timer_clearInterruptStatus(config->base,
-				      DL_TIMER_INTERRUPT_CC0_UP_EVENT);
 	DL_Timer_enableInterrupt(config->base,
 				 DL_TIMER_INTERRUPT_CC0_UP_EVENT);
 
@@ -167,7 +168,12 @@ static uint32_t counter_mspm0_get_pending_int(const struct device *dev)
 	const struct counter_mspm0_config *config = dev->config;
 	uint32_t status;
 
-	status = DL_Timer_getRawInterruptStatus(config->base,
+	/* only enabled interrupts are returned here. This is to prevent other
+	 * calls from files like cortex_m_systick from making pending interrupt
+	 * decisions on interrupts that are not cleared by the ISR as they are
+	 * don't cares from the perspective of the coutner.
+	 */
+	status = DL_Timer_getEnabledInterruptStatus(config->base,
 				(DL_TIMER_INTERRUPT_LOAD_EVENT |
 				 DL_TIMER_INTERRUPT_CC0_UP_EVENT));
 
