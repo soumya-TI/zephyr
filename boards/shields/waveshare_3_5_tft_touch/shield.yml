@@ -1,0 +1,7 @@
+shield:
+  name: waveshare_3_5_tft_touch
+  full_name: Waveshare 3.5" Capacitive Touch LCD
+  vendor: waveshare
+  supported_features:
+    - input
+    - display
