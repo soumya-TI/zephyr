@@ -54,7 +54,11 @@ static void i2c_gpio_set_scl(void *io_context, int state)
 {
 	const struct i2c_gpio_config *config = io_context;
 
-	gpio_pin_set_dt(&config->scl_gpio, state);
+	if (state) {
+		gpio_pin_configure_dt(&config->scl_gpio, GPIO_INPUT);
+	} else {
+		gpio_pin_configure_dt(&config->scl_gpio, GPIO_OUTPUT_LOW);
+	}
 }
 
 #ifdef CONFIG_I2C_GPIO_CLOCK_STRETCHING
@@ -71,7 +75,11 @@ static void i2c_gpio_set_sda(void *io_context, int state)
 {
 	const struct i2c_gpio_config *config = io_context;
 
-	gpio_pin_set_dt(&config->sda_gpio, state);
+	if (state) {
+		gpio_pin_configure_dt(&config->sda_gpio, GPIO_INPUT);
+	} else {
+		gpio_pin_configure_dt(&config->sda_gpio, GPIO_OUTPUT_LOW);
+	}
 }
 
 static int i2c_gpio_get_sda(void *io_context)

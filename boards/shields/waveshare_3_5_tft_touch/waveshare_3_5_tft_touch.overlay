@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2026 Texas Instruments
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/display/panel.h>
+
+/ {
+	chosen {
+		zephyr,display = &st7796s_display;
+		zephyr,touch   = &ft6336u_touch;
+	};
+
+	lvgl_pointer: lvgl-pointer {
+		compatible = "zephyr,lvgl-pointer-input";
+		input = <&ft6336u_touch>;
+		swap-xy;
+		invert-x;
+		invert-y;
+	};
+
+	waveshare_3_5_tft_touch_mipi_dbi: mipi_dbi {
+		compatible = "zephyr,mipi-dbi-spi";
+		write-only;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		st7796s_display: st7796s@0 {
+			compatible = "sitronix,st7796s";
+			reg = <0>;
+			mipi-max-frequency = <25000000>;
+			invert-mode = "1-dot";
+			color-invert;
+			madctl   = <0xE8>;
+			rgb-is-inverted;
+			width    = <480>;
+			height   = <320>;
+			pwr1     = [80 45];
+			pwr2     = <0x13>;
+			pwr3     = <0xa7>;
+			vcmpctl  = <0x0a>;
+			doca     = [40 8a 00 00 29 19 a5 33];
+			pgc = [d0 08 0f 06 06 33 30 33 47 17 13 13 2b 31];
+			ngc = [d0 0a 11 0b 09 07 2f 33 47 38 15 16 2c 32];
+		};
+	};
+};

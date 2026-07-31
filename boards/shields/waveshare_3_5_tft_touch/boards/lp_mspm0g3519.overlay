@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2026 Texas Instruments
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/i2c/i2c.h>
+
+&waveshare_3_5_tft_touch_mipi_dbi {
+	dc-gpios    = <&gpiob 7 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&gpioa 9 GPIO_ACTIVE_LOW>;
+	spi-dev     = <&spi0>;
+};
+
+/ {
+	display_backlight: display-backlight {
+		compatible = "regulator-fixed";
+		regulator-name = "display-backlight";
+		enable-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+	};
+
+	i2c_touch: i2c_gpio {
+		compatible = "gpio-i2c";
+		sda-gpios = <&gpioa 0 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&gpioa 1 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ft6336u_touch: ft6336u@38 {
+			compatible = "focaltech,ft6146";
+			reg = <0x38>;
+			int-gpios   = <&gpioa 13 GPIO_ACTIVE_LOW>;
+			reset-gpios = <&gpiob 14 GPIO_ACTIVE_LOW>;
+			screen-width  = <480>;
+			screen-height = <320>;
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+};
+
+&flash0 {
+	reg = <0x0 DT_SIZE_K(512)>;
+};
+
+&sram1 {
+	compatible = "zephyr,memory-region", "mmio-sram";
+	zephyr,memory-region = "LVGL_BUF";
+};
