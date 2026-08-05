@@ -39,6 +39,8 @@ if(CONFIG_BUILD_WITH_TFA)
     set(TFA_TARGET_BOARD "${CONFIG_TFA_TARGET_BOARD}")
   endif()
 
+  find_program(MAKE_EXECUTABLE NAMES make REQUIRED)
+
   # Allow boards/SoCs to override the cross-compile toolchain for TF-A.
   # Priority: CMake cache (-DTFA_CROSS_COMPILE=...) > Kconfig > Zephyr CROSS_COMPILE
   if(NOT TFA_CROSS_COMPILE)
@@ -63,6 +65,9 @@ if(CONFIG_BUILD_WITH_TFA)
   if(NOT "${TFA_TARGET_BOARD}" STREQUAL "")
     list(APPEND TFA_BUILD_CMD_COMMON TARGET_BOARD=${TFA_TARGET_BOARD})
   endif()
+
+  set(TFA_BUILD_CMD "")
+  set(TFA_POST_BUILD_MAKE_ARGS "")
 
   if(CONFIG_TFA_BUILD_FIP)
 
