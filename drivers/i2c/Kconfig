@@ -290,4 +290,6 @@ config I2C_NXP_II2C
 	help
 	  Enable the NXP II2C driver.
 
+source "drivers/i2c/Kconfig.uart_bridge"
+
 endif # I2C

@@ -1,0 +1,44 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * PC-test configuration: uart0 (PA10/PA11, XDS110 virtual COM port)
+ * is repurposed as the bridge UART so no extra USB-UART adapter is needed.
+ * Console is disabled via lp_mspm0g3519.conf.
+ *
+ * For production wiring (uart1 to fixed-function MSP), swap uart-dev
+ * back to &uart1 and re-enable the console.
+ */
+
+/* Reduce uart0 from 115200 (console default) to 9600 for the bridge */
+&uart0 {
+	current-speed = <9600>;
+};
+
+/ {
+	uart_i2c0: uart-i2c-bridge {
+		compatible = "uart-i2c-bridge";
+		uart-dev = <&uart0>;
+		response-timeout-ms = <200>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		fan_ctrl: max31790@50 {
+			compatible = "maxim,max31790";
+			reg = <0x50>;
+
+			fan_pwm: max31790-pwm {
+				compatible = "maxim,max31790-pwm";
+				#pwm-cells = <2>;
+			};
+
+			fan_speed_1: max31790-fan-speed {
+				compatible = "maxim,max31790-fan-speed";
+				channel = <1>;
+			};
+
+			fan_fault: max31790-fan-fault {
+				compatible = "maxim,max31790-fan-fault";
+			};
+		};
+	};
+};

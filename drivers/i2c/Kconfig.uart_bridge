@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config I2C_UART_BRIDGE
+	bool "UART-to-I2C bridge virtual I2C controller"
+	default y
+	depends on DT_HAS_UART_I2C_BRIDGE_ENABLED
+	select UART_INTERRUPT_DRIVEN
+	help
+	  Virtual I2C controller that tunnels I2C transactions over a UART
+	  link to a fixed-function bridge MCU.
+

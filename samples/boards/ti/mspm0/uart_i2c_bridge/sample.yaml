@@ -1,0 +1,9 @@
+sample:
+  name: UART-to-I2C bridge fan controller (MAX31790) on MSPM0G
+tests:
+  sample.boards.ti.mspm0.uart_i2c_bridge:
+    build_only: true
+    platform_allow:
+      - lp_mspm0g3507
+      - lp_mspm0g3519
+    tags: i2c uart fan

@@ -1,0 +1,44 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * UART1 (PB4/PB5) connects to the fixed-function MSPM0G3507 bridge MCU
+ * running uart_i2c_bridge firmware (SHared_i2c protocol).
+ * The bridge translates UART frames to I2C and drives the MAX31790.
+ */
+
+/* UART1 on PB4(TX)/PB5(RX) at 9600 baud — bridge UART link */
+&uart1 {
+	status = "okay";
+	current-speed = <9600>;
+	pinctrl-0 = <&uart1_tx_pb4 &uart1_rx_pb5>;
+	pinctrl-names = "default";
+};
+
+/ {
+	uart_i2c0: uart-i2c-bridge {
+		compatible = "uart-i2c-bridge";
+		uart-dev = <&uart1>;
+		response-timeout-ms = <200>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		fan_ctrl: max31790@50 {
+			compatible = "maxim,max31790";
+			reg = <0x50>;
+
+			fan_pwm: max31790-pwm {
+				compatible = "maxim,max31790-pwm";
+				#pwm-cells = <2>;
+			};
+
+			fan_speed_1: max31790-fan-speed {
+				compatible = "maxim,max31790-fan-speed";
+				channel = <1>;
+			};
+
+			fan_fault: max31790-fan-fault {
+				compatible = "maxim,max31790-fan-fault";
+			};
+		};
+	};
+};

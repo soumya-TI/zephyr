@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  UART-to-I2C bridge virtual I2C controller.
+
+  Tunnels Zephyr I2C transactions over a UART link to a fixed-function
+  bridge MCU running the uart_i2c_bridge firmware (SHared_i2c protocol).
+
+
+compatible: "uart-i2c-bridge"
+
+include: [i2c-controller.yaml]
+
+properties:
+  uart-dev:
+    type: phandle
+    required: true
+    description: UART device connected to the bridge MCU (9600 baud 8N1).
+
+  response-timeout-ms:
+    type: int
+    default: 100
+    description: Milliseconds to wait for read-response bytes from the bridge.

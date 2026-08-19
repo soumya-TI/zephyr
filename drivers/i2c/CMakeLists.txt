@@ -11,6 +11,7 @@ zephyr_library_sources_ifdef(CONFIG_GPIO_I2C_SWITCH gpio_i2c_switch.c)
 zephyr_library_sources_ifdef(CONFIG_I2C_BITBANG i2c_bitbang.c)
 zephyr_library_sources_ifdef(CONFIG_I2C_EMUL i2c_emul.c)
 zephyr_library_sources_ifdef(CONFIG_I2C_GPIO i2c_gpio.c)
+zephyr_library_sources_ifdef(CONFIG_I2C_UART_BRIDGE i2c_uart_bridge.c)
 zephyr_library_sources_ifdef(CONFIG_I2C_RTIO i2c_rtio.c i2c_rtio_default.c)
 
 zephyr_library_sources_ifdef(CONFIG_I2C_SHELL i2c_shell.c)

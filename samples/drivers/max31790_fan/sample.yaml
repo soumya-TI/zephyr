@@ -1,0 +1,24 @@
+sample:
+  name: MAX31790 Fan Controller
+  description: >
+    Demonstrates MAX31790 6-channel PWM fan controller via the Zephyr MFD,
+    PWM and sensor drivers. Reads fan speed (RPM) and fault status, and
+    sets fan duty cycle over PWM. Supports both direct I2C and UART-to-I2C
+    bridge (MSPM0G) topologies.
+common:
+  tags:
+    - drivers
+    - fan
+    - pwm
+    - sensor
+  filter: dt_compat_enabled("maxim,max31790")
+  depends_on: i2c
+tests:
+  sample.drivers.max31790_fan:
+    build_only: true
+    platform_allow:
+      - lp_mspm0g3507
+      - lp_mspm0g3519
+    tags: fan pwm sensor i2c
+    integration_platforms:
+      - lp_mspm0g3507
