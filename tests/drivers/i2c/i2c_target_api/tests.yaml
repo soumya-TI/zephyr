@@ -30,6 +30,9 @@ tests:
       - nucleo_f401re
       - nucleo_f429zi
       - nucleo_h503rb
+      - lp_mspm0g3519
+      - lp_mspm0g3507
+      - lp_mspm0l2228
       - nucleo_h753zi
       - nucleo_l073rz
       - nucleo_l152re
