@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2026 Texas Instruments
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * LP-MSPM33C321A overlay: enables the QSPI controller and the on-board
+ * Macronix MX25L12833F (128 Mbit / 16 MB) NOR flash.
+ *
+ * Pin routing and PINCM/function values are taken from the TI MSPM33 SDK
+ * (LP_MSPM33C321A qspi_flash_readback example + mspm33c321x.h pinmux tables):
+ *   SCLK=PB16 (PINCM33/PF6), PICO/IO0=PA12 (PINCM34/PF6),
+ *   POCI/IO1=PA14 (PINCM36/PF6), IO2=PA13 (PINCM35/PF6),
+ *   IO3=PB15 (PINCM32/PF6), CS0=PC0 (PINCM74/PF7).
+ *
+ * Flash is configured in single-line (1-1-1) mode for first bring-up. To use
+ * quad, set mspi-io-mode to "MSPI_IO_MODE_QUAD_1_1_4", read-command <0x6b>,
+ * rx-dummy <8> (or 0xeb / 6 dummy for 1-4-4) and ensure the QE bit is set.
+ */
+
+#include <zephyr/dt-bindings/pinctrl/mspm0-pinctrl.h>
+#include <zephyr/dt-bindings/clock/mspm0_clock.h>
+
+&pinctrl {
+	qspi0_sclk_pb16: qspi0_sclk_pb16 {
+		pinmux = <MSP_PINMUX(33, MSPM0_PIN_FUNCTION_6)>;
+	};
+	qspi0_pico_pa12: qspi0_pico_pa12 {
+		pinmux = <MSP_PINMUX(34, MSPM0_PIN_FUNCTION_6)>;
+	};
+	qspi0_poci_pa14: qspi0_poci_pa14 {
+		pinmux = <MSP_PINMUX(36, MSPM0_PIN_FUNCTION_6)>;
+	};
+	qspi0_io2_pa13: qspi0_io2_pa13 {
+		pinmux = <MSP_PINMUX(35, MSPM0_PIN_FUNCTION_6)>;
+	};
+	qspi0_io3_pb15: qspi0_io3_pb15 {
+		pinmux = <MSP_PINMUX(32, MSPM0_PIN_FUNCTION_6)>;
+	};
+	qspi0_cs0_pc0: qspi0_cs0_pc0 {
+		pinmux = <MSP_PINMUX(74, MSPM0_PIN_FUNCTION_7)>;
+	};
+};
+
+&qspi0 {
+	status = "okay";
+	pinctrl-0 = <&qspi0_sclk_pb16 &qspi0_pico_pa12 &qspi0_poci_pa14
+		     &qspi0_io2_pa13 &qspi0_io3_pb15 &qspi0_cs0_pc0>;
+	pinctrl-names = "default";
+
+	mx25l12833f: flash@0 {
+		compatible = "jedec,nor";
+		reg = <0>;
+		size = <DT_SIZE_M(128)>;                /* 128 Mbit = 16 MB */
+		jedec-id = [c2 20 18];
+		page-size = <256>;
+		erase-block-size = <4096>;
+
+		mspi-max-frequency = <DT_FREQ_M(24)>;
+		mspi-io-mode = "MSPI_IO_MODE_SINGLE";
+		mspi-data-rate = "MSPI_DATA_RATE_SINGLE";
+		mspi-hardware-ce-num = <0>;
+		mspi-cpp-mode = "MSPI_CPP_MODE_0";
+		mspi-endian = "MSPI_BIG_ENDIAN";
+		mspi-ce-polarity = "MSPI_CE_ACTIVE_LOW";
+
+		read-command = <0x03>;                  /* normal read (0 dummy) */
+		write-command = <0x02>;                 /* page program */
+		rx-dummy = <0>;
+		tx-dummy = <0>;
+		command-length = "INSTR_1_BYTE";
+		address-length = "ADDR_3_BYTE";
+	};
+};

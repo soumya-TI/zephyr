@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Texas Instruments
+# SPDX-License-Identifier: Apache-2.0
+
+config MSPI_MSPM33_QSPI
+	bool "TI MSPM33 QSPI controller"
+	default y
+	depends on DT_HAS_TI_MSPM33_QSPI_ENABLED
+	select PINCTRL
+	select CLOCK_CONTROL
+	help
+	  Enable the native PIO MSPI driver for the Texas Instruments
+	  MSPM33C QSPI peripheral. Transfers are interrupt-driven (IDLE +
+	  RX/TX FIFO interrupts); DMA and XIP are not supported.

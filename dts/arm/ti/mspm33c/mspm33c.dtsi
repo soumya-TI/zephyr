@@ -184,6 +184,16 @@
 			gpio-controller;
 			#gpio-cells = <2>;
 		};
+
+		qspi0: spi@40032000 {
+			compatible = "ti,mspm33-qspi";
+			reg = <0x40032000 0x2000>;
+			interrupts = <47 0>;
+			clocks = <&ckm MSPM0_CLOCK_ULPCLK>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
 	};
 };
 

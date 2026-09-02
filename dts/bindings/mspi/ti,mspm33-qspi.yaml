@@ -1,0 +1,34 @@
+# Copyright (c) 2026 Texas Instruments
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Texas Instruments MSPM33C QSPI controller.
+
+  This binding covers the QSPI peripheral found on the MSPM33C family,
+  used as an indirect (PIO) multi-bit SPI controller via the Zephyr
+  MSPI subsystem.
+
+compatible: "ti,mspm33-qspi"
+
+include:
+  - mspi-controller.yaml
+  - pinctrl-device.yaml
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  clocks:
+    required: true
+    description: |
+      Clock phandle/specifier for the QSPI peripheral clock, e.g.
+      <&ckm MSPM0_CLOCK_ULPCLK>.
+
+  pinctrl-0:
+    required: true
+
+  pinctrl-names:
+    required: true
