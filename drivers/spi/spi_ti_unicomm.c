@@ -326,7 +326,27 @@ done:
 	return ret;
 }
 
-static DEVICE_API(spi, spi_ti_unicomm_api) = {.transceive = spi_ti_unicomm_transceive};
+static int spi_ti_unicomm_release(const struct device *dev, const struct spi_config *config)
+{
+	struct spi_ti_unicomm_data *data = dev->data;
+	const struct spi_ti_unicomm_config *cfg = dev->config;
+
+	if (!spi_context_configured(&data->ctx, config)) {
+		return -EINVAL;
+	}
+
+	if (sys_read32(cfg->unicomm_spi_base + UNICOMM_SPI_STAT) & UNICOMMSPI_STAT_BUSY_MASK) {
+		return -EBUSY;
+	}
+
+	spi_context_unlock_unconditionally(&data->ctx);
+	return 0;
+}
+
+static DEVICE_API(spi, spi_ti_unicomm_api) = {
+	.transceive = spi_ti_unicomm_transceive,
+	.release = spi_ti_unicomm_release,
+};
 
 #define SPI_TI_UNICOMM_INIT(index)                                                                 \
 	PINCTRL_DT_INST_DEFINE(index);                                                             \
