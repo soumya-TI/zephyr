@@ -65,6 +65,12 @@ static inline void unicomm_delay_cycles(uint32_t cycles)
 }
 #endif /* !CONFIG_HAS_MSPM0_SDK */
 
+/*
+ * Per TRM Section 2.2.7 / SDK DL_SPI_enablePower: after writing PWREN, poll
+ * until the enable bit reads back before accessing any other peripheral
+ * registers (including IPMODE). A fixed cycle delay is insufficient at high
+ * CPU frequencies.
+ */
 static int ti_unicomm_init(const struct device *dev)
 {
 	const struct ti_unicomm_config *cfg = dev->config;
@@ -94,11 +100,16 @@ static int ti_unicomm_init(const struct device *dev)
 #define TI_UNICOMM_CHILD_IPMODE_UART(node_id)                                                      \
 	COND_CODE_1(DT_NODE_HAS_COMPAT(node_id, ti_mspm0_uart), (IPMODE_UART), ())
 
+#define TI_UNICOMM_CHILD_IPMODE_SPI(node_id)                                                       \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(node_id, ti_unicomm_spi), (IPMODE_SPI), ())
+
 #define TI_UNICOMM_CHILD_IPMODE_I2C(node_id)                                                       \
 	COND_CODE_1(DT_NODE_HAS_COMPAT(node_id, ti_unicomm_i2c), (IPMODE_I2CC), ())
 
 #define TI_UNICOMM_CHILD_IPMODE(node_id)                                                           \
+	                                                          \
 	TI_UNICOMM_CHILD_IPMODE_UART(node_id)                                                      \
+	TI_UNICOMM_CHILD_IPMODE_SPI(node_id)                                                      \
 	TI_UNICOMM_CHILD_IPMODE_I2C(node_id)
 
 #define TI_UNICOMM_INIT(idx)                                                                       \
