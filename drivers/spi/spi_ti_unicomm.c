@@ -12,7 +12,6 @@ LOG_MODULE_REGISTER(spi_ti_unicomm, CONFIG_SPI_LOG_LEVEL);
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/device.h>
-#include <zephyr/kernel.h>
 
 #include "spi_context.h"
 
@@ -20,26 +19,6 @@ LOG_MODULE_REGISTER(spi_ti_unicomm, CONFIG_SPI_LOG_LEVEL);
  * UNICOMM Register Offsets
  */
 
-#define UNICOMM_POWER_EN  0x00000800U
-#define UNICOMM_RESET_CTL 0x00000804U
-#define UNICOMM_CLOCK_CFG 0x00000808U
-#define UNICOMM_STATUS    0x00000814U
-#define UNICOMM_MODE      0x00001100U
-
-/*
- * Peripheral Configuration Values
- */
-
-#define PWREN_ENABLE  0x00000001U
-#define PWREN_DISABLE 0x00000000U
-#define PWREN_KEY     0x26000000U
-#define IPMODE_SPI    0x00000001U
-
-#define RESET_CTL_KEY_UNLOCK       0xB1000000U
-#define RESET_CTL_STICKY_BIT_CLEAR 0x00000002U
-#define RESET_CTL_ASSERT_RESET     0x00000001U
-
-/* UNICOMM SPI Regs */
 #define UNICOMM_SPI_CLKDIV 0x0
 #define UNICOMM_SPI_CLKSEL 0x8
 #define UNICOMM_SPI_CTL0   0x100 /* frame format, data size */
@@ -99,7 +78,6 @@ LOG_MODULE_REGISTER(spi_ti_unicomm, CONFIG_SPI_LOG_LEVEL);
 struct spi_ti_unicomm_config {
 	const struct pinctrl_dev_config *pcfg;
 
-	uint32_t unicomm_inst_base;
 	uint32_t unicomm_spi_base;
 
 	uint8_t clkdiv;     /* Clock divide ratio. Register value: 0=div1, 1=div2, ... 7=div8 */
@@ -118,20 +96,6 @@ struct spi_ti_unicomm_data {
 /*
  * Helper functions
  */
-
-/* Reset unicomm instance */
-static inline void unicomm_reset(uint32_t base)
-{
-	sys_write32(RESET_CTL_KEY_UNLOCK | RESET_CTL_STICKY_BIT_CLEAR | RESET_CTL_ASSERT_RESET,
-		    base + UNICOMM_RESET_CTL);
-}
-
-/* Enable power for UNICOMM instance */
-static inline void unicomm_enable_power(uint32_t base)
-{
-	sys_write32(PWREN_KEY | PWREN_ENABLE, base + UNICOMM_POWER_EN);
-	k_sleep(K_CYC(20));
-}
 
 static int spi_ti_unicomm_configure(const struct device *dev, const struct spi_config *config)
 {
@@ -201,13 +165,6 @@ static int spi_ti_unicomm_configure(const struct device *dev, const struct spi_c
 	/* Set controller mode */
 	ctl1 |= UNICOMMSPI_CTL1_CP_MASK;
 
-	/* Disable peripheral, apply settings and enable again */
-	unicomm_reset(cfg->unicomm_inst_base);
-	unicomm_enable_power(cfg->unicomm_inst_base);
-
-	/* Set instance mode to SPI */
-	sys_write32(IPMODE_SPI, cfg->unicomm_inst_base + UNICOMM_MODE);
-
 	/* Configure clock divide ratio and select BUSCLK as clock source */
 	sys_write32(cfg->clkdiv, cfg->unicomm_spi_base + UNICOMM_SPI_CLKDIV);
 	sys_write32(SPI_CLKSEL_BUSCLK_ENABLE, cfg->unicomm_spi_base + UNICOMM_SPI_CLKSEL);
@@ -240,12 +197,6 @@ static int spi_ti_unicomm_init(const struct device *dev)
 	const struct spi_ti_unicomm_config *cfg = dev->config;
 	struct spi_ti_unicomm_data *data = dev->data;
 	int ret = 0;
-
-	unicomm_reset(cfg->unicomm_inst_base);
-	unicomm_enable_power(cfg->unicomm_inst_base);
-
-	/* Set instance mode to SPI */
-	sys_write32(IPMODE_SPI, cfg->unicomm_inst_base + UNICOMM_MODE);
 
 	/* Configure clock divide ratio and select BUSCLK as clock source */
 	sys_write32(cfg->clkdiv, cfg->unicomm_spi_base + UNICOMM_SPI_CLKDIV);
@@ -351,9 +302,7 @@ static DEVICE_API(spi, spi_ti_unicomm_api) = {.transceive = spi_ti_unicomm_trans
                                                                                                    \
 	static const struct spi_ti_unicomm_config spi_config_##index = {                           \
 		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(index),                                     \
-		.unicomm_inst_base =                                                               \
-			(uint32_t)(DT_REG_ADDR_BY_IDX(DT_PARENT(DT_DRV_INST(index)), 0)),          \
-		.unicomm_spi_base = (uint32_t)(DT_INST_REG_ADDR(index)),                           \
+		.unicomm_spi_base = (uint32_t)(DT_INST_REG_ADDR(index)) + 0x1000U,                  \
 		.clkdiv = SPI_CLKDIV_DIVIDE_BY_1,                                                  \
 		.busclk_hz = DT_INST_PROP_OR(index, unicomm_clock_freq, 100000000U),               \
 	};                                                                                         \
