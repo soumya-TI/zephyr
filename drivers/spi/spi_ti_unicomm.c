@@ -11,6 +11,8 @@ LOG_MODULE_REGISTER(spi_ti_unicomm, CONFIG_SPI_LOG_LEVEL);
 
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/spi.h>
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/clock_control/mspm0_clock_control.h>
 #include <zephyr/device.h>
 
 #include "spi_context.h"
@@ -75,13 +77,17 @@ LOG_MODULE_REGISTER(spi_ti_unicomm, CONFIG_SPI_LOG_LEVEL);
 		sys_write32(tmp | ((value) & (mask)), reg_offset);                                 \
 	}
 
+/* SCR range: 0-1023 */
+#define UNICOMMSPI_SCR_MIN 0
+#define UNICOMMSPI_SCR_MAX 1023
+
 struct spi_ti_unicomm_config {
 	const struct pinctrl_dev_config *pcfg;
 
 	uint32_t unicomm_spi_base;
 
-	uint8_t clkdiv;     /* Clock divide ratio. Register value: 0=div1, 1=div2, ... 7=div8 */
-	uint32_t busclk_hz; /* BUSCLK input frequency in Hz (before clkdiv) */
+	const struct device *clk_dev;
+	struct mspm0_sys_clock clk_subsys;
 
 	uint32_t tx_fifo_threshold;
 	uint32_t rx_fifo_threshold;
@@ -102,10 +108,11 @@ static int spi_ti_unicomm_configure(const struct device *dev, const struct spi_c
 	const struct spi_ti_unicomm_config *cfg = dev->config;
 	struct spi_ti_unicomm_data *data = dev->data;
 
-	uint32_t frame_format;
-
 	uint32_t ctl0 = 0;
 	uint32_t ctl1 = 0;
+	uint32_t clock_rate;
+	uint32_t scr;
+	int ret;
 
 	if (spi_context_configured(&data->ctx, config)) {
 		/* Nothing to do */
@@ -165,8 +172,30 @@ static int spi_ti_unicomm_configure(const struct device *dev, const struct spi_c
 	/* Set controller mode */
 	ctl1 |= UNICOMMSPI_CTL1_CP_MASK;
 
-	/* Configure clock divide ratio and select BUSCLK as clock source */
-	sys_write32(cfg->clkdiv, cfg->unicomm_spi_base + UNICOMM_SPI_CLKDIV);
+	/* Get BUSCLK rate and compute SCR for the requested frequency.
+	 * f_SPI = BUSCLK / (2 * (1 + SCR))  =>  SCR = ceil(BUSCLK / (2 * freq)) - 1
+	 */
+	ret = clock_control_get_rate(cfg->clk_dev, (clock_control_subsys_t)&cfg->clk_subsys,
+				     &clock_rate);
+	if (ret < 0) {
+		return ret;
+	}
+
+	if (config->frequency == 0 || config->frequency > clock_rate / 2) {
+		return -EINVAL;
+	}
+
+	scr = DIV_ROUND_UP(clock_rate, 2 * config->frequency) - 1;
+	if (scr > UNICOMMSPI_SCR_MAX) {
+		return -EINVAL;
+	}
+
+	/* Disable SPI before reconfiguring */
+	UPDATE_REG(cfg->unicomm_spi_base + UNICOMM_SPI_CTL1, SPI_CTL1_DISABLE,
+		   UNICOMMSPI_CTL1_ENABLE_MASK);
+
+	/* Configure BUSCLK as clock source (CLKDIV=0: divide-by-1) */
+	sys_write32(SPI_CLKDIV_DIVIDE_BY_1, cfg->unicomm_spi_base + UNICOMM_SPI_CLKDIV);
 	sys_write32(SPI_CLKSEL_BUSCLK_ENABLE, cfg->unicomm_spi_base + UNICOMM_SPI_CLKSEL);
 
 	/* Set CTL0 and CTL1 */
@@ -180,7 +209,7 @@ static int spi_ti_unicomm_configure(const struct device *dev, const struct spi_c
 			   UNICOMMSPI_CTL1_CP_MASK | UNICOMMSPI_CTL1_LBM_MASK);
 
 	/* Set SPI bitrate Serial Clock Divider (SCR) */
-	UPDATE_REG(cfg->unicomm_spi_base + UNICOMM_SPI_CLKCTL, 99, UNICOMMSPI_CLKCTL_SCR_MASK);
+	UPDATE_REG(cfg->unicomm_spi_base + UNICOMM_SPI_CLKCTL, scr, UNICOMMSPI_CLKCTL_SCR_MASK);
 
 	/* Enable SPI */
 	UPDATE_REG(cfg->unicomm_spi_base + UNICOMM_SPI_CTL1, SPI_CTL1_ENABLE,
@@ -198,17 +227,22 @@ static int spi_ti_unicomm_init(const struct device *dev)
 	struct spi_ti_unicomm_data *data = dev->data;
 	int ret = 0;
 
-	/* Configure clock divide ratio and select BUSCLK as clock source */
-	sys_write32(cfg->clkdiv, cfg->unicomm_spi_base + UNICOMM_SPI_CLKDIV);
+	if (!device_is_ready(cfg->clk_dev)) {
+		LOG_ERR("Clock device not ready");
+		return -ENODEV;
+	}
+
+	/* Select BUSCLK as clock source (CLKDIV=0: divide-by-1) */
+	sys_write32(SPI_CLKDIV_DIVIDE_BY_1, cfg->unicomm_spi_base + UNICOMM_SPI_CLKDIV);
 	sys_write32(SPI_CLKSEL_BUSCLK_ENABLE, cfg->unicomm_spi_base + UNICOMM_SPI_CLKSEL);
 
 	/*
-	 * CTL0: Motorola 4-wire (FRF=0x20), CPOL=0/CPHA=1 (SPH=0x200), 8-bit (DSS=0x7)
-	 * CTL1: controller mode (CP=0x4), MSB first (MSB bit=0, acts as LSB-first enable), no
-	 * parity
+	 * Set safe reset defaults:
+	 * CTL0: Motorola 4-wire, CPHA=1, 8-bit
+	 * CTL1: controller mode, MSB first, no parity, SCR computed per-transfer
 	 */
 	UPDATE_REG(cfg->unicomm_spi_base + UNICOMM_SPI_CTL0,
-		   (uint32_t)0x00000020U | (uint32_t)0x00000200U | (uint32_t)0x00000007U,
+		   SPI_CTL0_FRF_MOTOROLA_4WIRE | SPI_CTL0_SPH_CPHA | SPI_CTL0_DSS_8BIT,
 		   UNICOMMSPI_CTL0_FRF_MASK | UNICOMMSPI_CTL0_SPO_MASK | UNICOMMSPI_CTL0_SPH_MASK |
 			   UNICOMMSPI_CTL0_DSS_MASK);
 
@@ -216,9 +250,6 @@ static int spi_ti_unicomm_init(const struct device *dev)
 		   UNICOMMSPI_CTL1_PES_MASK | UNICOMMSPI_CTL1_PREN_MASK |
 			   UNICOMMSPI_CTL1_PTEN_MASK | UNICOMMSPI_CTL1_MSB_MASK |
 			   UNICOMMSPI_CTL1_CP_MASK | UNICOMMSPI_CTL1_LBM_MASK);
-
-	/* Set SPI bitrate Serial Clock Divider (SCR) */
-	UPDATE_REG(cfg->unicomm_spi_base + UNICOMM_SPI_CLKCTL, 99, UNICOMMSPI_CLKCTL_SCR_MASK);
 
 	/* Enable SPI */
 	UPDATE_REG(cfg->unicomm_spi_base + UNICOMM_SPI_CTL1, SPI_CTL1_ENABLE,
@@ -299,19 +330,19 @@ static DEVICE_API(spi, spi_ti_unicomm_api) = {.transceive = spi_ti_unicomm_trans
 
 #define SPI_TI_UNICOMM_INIT(index)                                                                 \
 	PINCTRL_DT_INST_DEFINE(index);                                                             \
-                                                                                                   \
+                                                                                                    \
 	static const struct spi_ti_unicomm_config spi_config_##index = {                           \
 		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(index),                                     \
 		.unicomm_spi_base = (uint32_t)(DT_INST_REG_ADDR(index)) + 0x1000U,                  \
-		.clkdiv = SPI_CLKDIV_DIVIDE_BY_1,                                                  \
-		.busclk_hz = DT_INST_PROP_OR(index, unicomm_clock_freq, 100000000U),               \
+		.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(index)),                              \
+		.clk_subsys = MSPM0_CLOCK_SUBSYS_FN(index),                                        \
 	};                                                                                         \
-                                                                                                   \
+                                                                                                    \
 	static struct spi_ti_unicomm_data spi_data_##index = {                                     \
 		SPI_CONTEXT_INIT_LOCK(spi_data_##index, ctx),                                      \
 		SPI_CONTEXT_INIT_SYNC(spi_data_##index, ctx),                                      \
 	};                                                                                         \
-                                                                                                   \
+                                                                                                    \
 	SPI_DEVICE_DT_INST_DEFINE(index, spi_ti_unicomm_init, NULL, &spi_data_##index,             \
 				  &spi_config_##index, POST_KERNEL, CONFIG_SPI_INIT_PRIORITY,      \
 				  &spi_ti_unicomm_api);
