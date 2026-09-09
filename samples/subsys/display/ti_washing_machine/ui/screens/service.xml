@@ -1,0 +1,59 @@
+<screen>
+	<view extends="lv_obj" width="#const_screen_w" height="#const_screen_h" scrollable="false">
+		<style name="style_screen_base" />
+
+		<nav_header title="Service" />
+		<btn_back x="0" y="0">
+			<screen_create_event screen="home" trigger="clicked" anim_type="fade_in" duration="150" />
+		</btn_back>
+
+		<surface x="#const_gutter" y="64" w="252" h="178" pad="14" gap="12">
+			<overline text="COMPONENT TEST" />
+
+			<row_metric
+				w="224"
+				title="Drum motor"
+				icon="icon_rpm"
+				value="subject_pwm_duty"
+				fmt="%d"
+				placeholder="74"
+				unit="% power"
+			/>
+			<slider width="224" min_value="0" max_value="100" bind_value="subject_pwm_duty" ext_click_area="18" />
+
+			<row_metric
+				w="224"
+				title="Water fill"
+				icon="icon_water"
+				value="subject_water_target"
+				fmt="%d"
+				placeholder="62"
+				unit="% level"
+			/>
+			<slider width="224" min_value="0" max_value="100" bind_value="subject_water_target" ext_click_area="18" />
+		</surface>
+
+		<column x="#const_gutter" y="252" gap="2">
+			<row gap="7" cross_align="center">
+				<lv_image src="icon_board" clickable="false">
+					<style name="style_icon_3" />
+				</lv_image>
+				<label text="Model WM-480 . firmware 1.4.2">
+					<style name="style_micro" />
+					<style name="style_ink_3" />
+				</label>
+			</row>
+			<label text="1284 cycles . last service 96 days ago">
+				<style name="style_micro" />
+				<style name="style_ink_3" />
+			</label>
+		</column>
+
+		<surface x="284" y="64" w="176" h="206" pad="12" gap="4">
+			<overline text="STATUS" />
+			<io_row w="152" title="Door interlock" on_text="Locked" off_text="Unlocked" state="subject_door" />
+			<io_row w="152" title="Heater" on_text="Heating" off_text="Off" state="subject_heater" />
+			<io_row w="152" title="Drain pump" on_text="Running" off_text="Idle" state="subject_pump" />
+		</surface>
+	</view>
+</screen>

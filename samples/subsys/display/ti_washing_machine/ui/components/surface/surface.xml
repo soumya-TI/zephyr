@@ -1,0 +1,18 @@
+<component>
+  <previews>
+    <preview width="300" height="180" style_bg_color="0xF0F4F6"/>
+  </previews>
+  <api>
+    <prop name="w"    type="int" default="264"/>
+    <prop name="h"    type="int" default="120"/>
+    <prop name="pad"  type="int" default="12"/>
+    <prop name="gap"  type="int" default="8"/>
+  </api>
+  <view extends="lv_obj" width="$w" height="$h" scrollable="false"
+        style_pad_all="$pad" style_pad_row="$gap"
+        style_layout="flex" style_flex_flow="column"
+        style_shadow_width="0" style_outline_width="0">
+    <style name="style_card_surface"/>
+    <style name="style_shadow_card"/>
+  </view>
+</component>
