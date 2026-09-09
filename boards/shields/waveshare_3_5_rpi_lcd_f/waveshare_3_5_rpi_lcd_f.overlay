@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) 2026 Texas Instruments
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/display/panel.h>
+
+/ {
+	chosen {
+		zephyr,display = &st7796s_display;
+		zephyr,touch   = &gt911_touch;
+	};
+
+	lvgl_pointer: lvgl-pointer {
+		compatible = "zephyr,lvgl-pointer-input";
+		input = <&gt911_touch>;
+		/*
+		 * Portrait 320x480: the GT911 reports in the panel's native
+		 * frame, which matches the display, so no swap/invert by
+		 * default. Tune these on hardware if touch does not track the
+		 * pointer (pair with the st7796s "madctl" below).
+		 */
+	};
+
+	waveshare_3_5_rpi_lcd_f_mipi_dbi: mipi_dbi {
+		compatible = "zephyr,mipi-dbi-spi";
+		write-only;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		st7796s_display: st7796s@0 {
+			compatible = "sitronix,st7796s";
+			reg = <0>;
+			/*
+			 * SPI src clock is 80MHz and the divider is integer
+			 * (clock/2/(SCR+1)): 25MHz rounds down to 20MHz (SCR=1),
+			 * while 40MHz hits SCR=0 = the 40MHz hardware max, i.e.
+			 * double the pixel throughput. The panel/ST7796S handle it.
+			 */
+			mipi-max-frequency = <40000000>;
+			invert-mode = "1-dot";
+			color-invert;
+			/*
+			 * Portrait 320(w) x 480(h), MV=0 so resolution is right.
+			 * Only the mirror bits vary by panel mounting (verify
+			 * with samples/drivers/display corner colors):
+			 *   0x08 = BGR, upright        -> red top-left
+			 *   0x48 = BGR|MX, h-mirror    -> red top-right
+			 *   0x88 = BGR|MY, v-mirror    -> red bottom-left
+			 *   0xC8 = BGR|MX|MY, 180 deg  -> red bottom-right
+			 */
+			madctl   = <0x48>;
+			rgb-is-inverted;
+			width    = <320>;
+			height   = <480>;
+			pwr1     = [80 45];
+			pwr2     = <0x13>;
+			pwr3     = <0xa7>;
+			vcmpctl  = <0x0a>;
+			doca     = [40 8a 00 00 29 19 a5 33];
+			pgc = [d0 08 0f 06 06 33 30 33 47 17 13 13 2b 31];
+			ngc = [d0 0a 11 0b 09 07 2f 33 47 38 15 16 2c 32];
+		};
+	};
+};
