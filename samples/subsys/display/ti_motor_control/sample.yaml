@@ -1,0 +1,19 @@
+sample:
+  name: TI MSPM0 LVGL Motor Control
+  description: >
+    A four-screen LVGL 9 motor-control UI (run / trend / faults / config)
+    vendored from the lvgl-services ti-motor-control demo, running on a 320x480
+    ST7796S + GT911 panel via the waveshare_3_5_rpi_lcd_f shield.
+tests:
+  sample.display.ti_motor_control:
+    harness: shield
+    platform_allow:
+      - lp_mspm0g3519
+    depends_on:
+      - display
+      - i2c
+    extra_args:
+      - SHIELD=waveshare_3_5_rpi_lcd_f
+    tags:
+      - display
+      - lvgl
