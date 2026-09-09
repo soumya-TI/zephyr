@@ -1,0 +1,19 @@
+sample:
+  name: TI MSPM0 LVGL Thermostat
+  description: >
+    A four-screen LVGL 9.5 smart-thermostat UI (home / climate / insights)
+    vendored from the lvgl-services thermostat demo, running on a 320x480
+    ST7796S + GT911 panel via the waveshare_3_5_rpi_lcd_f shield.
+tests:
+  sample.display.ti_thermostat:
+    harness: shield
+    platform_allow:
+      - lp_mspm0g3519
+    depends_on:
+      - display
+      - i2c
+    extra_args:
+      - SHIELD=waveshare_3_5_rpi_lcd_f
+    tags:
+      - display
+      - lvgl
