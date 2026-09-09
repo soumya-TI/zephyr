@@ -1,0 +1,44 @@
+/*
+ * Copyright (c) 2026 Texas Instruments
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Landscape overlay for the ti_washing_machine sample on LP-MSPM0G3519 +
+ * waveshare_3_5_rpi_lcd_f shield.  The shield default is portrait (320x480,
+ * madctl=0x48).  This overlay rotates the ST7796S to landscape (480x320) and
+ * maps GT911 touch coordinates onto the rotated frame.
+ *
+ * MADCTL byte breakdown (same as waveshare_3_5_tft_touch non-F landscape):
+ *   MY=1  MX=1  MV=1  ML=0  BGR=1  MH=0  → 0xE8
+ *
+ * Touch coordinate pipeline
+ * ─────────────────────────
+ * The FT5336 driver (used on the non-F waveshare shield) implicitly swaps its
+ * X/Y when calling input_touchscreen_report_pos — it passes (col=Y_reg, row=X_reg),
+ * so INPUT_ABS_X carries the long axis (0..479) and INPUT_ABS_Y the short axis
+ * (0..319).  The GT911 driver does NOT swap: it passes (col=X_reg, row=Y_reg),
+ * so INPUT_ABS_X = short (0..319) and INPUT_ABS_Y = long (0..479).
+ *
+ * Consequence: the lvgl-pointer swap-xy that cancels the FT5336 implicit swap
+ * must be REMOVED for GT911.  Instead:
+ *  • Override GT911 screen-width/height to landscape (480×320) so the inversion
+ *    formula (screen_width - x) uses the correct range for each axis.
+ *  • Apply invert-x and invert-y in the LVGL pointer to mirror both axes —
+ *    this is the same net effect as the non-F shield's double-swap + 2 inverts.
+ */
+
+&st7796s_display {
+	madctl = <0xE8>;
+	width  = <480>;
+	height = <320>;
+};
+
+&gt911_touch {
+	screen-width  = <480>;
+	screen-height = <320>;
+};
+
+&lvgl_pointer {
+	invert-x;
+	invert-y;
+};

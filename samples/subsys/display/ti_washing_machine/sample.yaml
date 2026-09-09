@@ -1,0 +1,19 @@
+sample:
+  name: TI MSPM0 LVGL Washing Machine
+  description: >
+    A four-screen LVGL 9 washing-machine UI (home / cycle / setup / service)
+    vendored from the lvgl-services ti-washing-machine demo, running on a 320x480
+    ST7796S + GT911 panel via the waveshare_3_5_rpi_lcd_f shield.
+tests:
+  sample.display.ti_washing_machine:
+    harness: shield
+    platform_allow:
+      - lp_mspm0g3519
+    depends_on:
+      - display
+      - i2c
+    extra_args:
+      - SHIELD=waveshare_3_5_rpi_lcd_f
+    tags:
+      - display
+      - lvgl

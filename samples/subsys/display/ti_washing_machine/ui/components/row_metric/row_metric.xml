@@ -1,0 +1,41 @@
+<component>
+  <previews>
+    <preview width="280" height="90" style_bg_color="0xFBFBFC"/>
+  </previews>
+  <api>
+    <prop name="title"       type="string"  default="Water level"/>
+    <prop name="icon"        type="image"   default="icon_water"/>
+    <prop name="value"       type="subject" default="subject_adc_water"/>
+    <prop name="fmt"         type="string"  default="%d"/>
+    <prop name="placeholder" type="string"  default="2480"/>
+    <prop name="unit"        type="string"  default="counts"/>
+    <prop name="w"           type="int"     default="240"/>
+  </api>
+  <view extends="lv_obj" width="$w" height="content" scrollable="false"
+        clickable="false"
+        style_bg_opa="0" style_border_width="0" style_shadow_width="0"
+        style_pad_all="0"
+        style_layout="flex" style_flex_flow="column">
+    <row width="$w" main_align="space_between" cross_align="center">
+      <row gap="6" cross_align="center">
+        <lv_image src="$icon" clickable="false">
+          <style name="style_icon_2"/>
+        </lv_image>
+        <label text="$title">
+          <style name="style_body"/>
+          <style name="style_ink_2"/>
+        </label>
+      </row>
+      <row gap="2" cross_align="end">
+        <label text="$placeholder" bind_text="$value" bind_text-fmt="$fmt">
+          <style name="style_body_strong"/>
+          <style name="style_ink"/>
+        </label>
+        <label text="$unit" style_translate_y="-1">
+          <style name="style_micro"/>
+          <style name="style_ink_3"/>
+        </label>
+      </row>
+    </row>
+  </view>
+</component>
