@@ -1,0 +1,14 @@
+sample:
+  name: TI MSPM0 LVGL Thermostat Full
+  description: >
+    Four-screen (home, schedule, rooms, insights) LVGL 9.5 thermostat UI
+    vendored from lvgl-services/ti-thermostat, trimmed for the LP-MSPM0G3519
+    (512 KB flash / 128 KB SRAM) with the Waveshare 3.5" RPi LCD (F) shield.
+tests:
+  sample.display.ti_thermostat_full:
+    harness: console
+    platform_allow:
+      - lp_mspm0g3519
+    tags:
+      - display
+      - lvgl
