@@ -13,6 +13,9 @@
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/logging/log.h>
+#ifdef CONFIG_SPI_MSPM0_DMA
+#include <zephyr/drivers/dma.h>
+#endif
 
 /* TI DriverLib includes */
 #include <driverlib/dl_spi.h>
@@ -25,6 +28,14 @@ LOG_MODULE_REGISTER(spi_mspm0, CONFIG_SPI_LOG_LEVEL);
 /* Data Frame Size (DFS) */
 #define SPI_DFS_8BIT		1
 #define SPI_DFS_16BIT		2
+
+/*
+ * Minimum transfer size (in frames) to use DMA.  Below this threshold the
+ * dma_config() + semaphore overhead exceeds the cost of pushing frames
+ * directly into the TX FIFO.  Display command sequences are typically ≤6
+ * bytes; only the pixel-data burst is large enough to benefit.
+ */
+#define SPI_MSPM0_DMA_TX_MIN_FRAMES	16
 
 /* Range for SPI Serial Clock Rate (SCR) */
 #define MSPM0_SPI_SCR_MIN	0
@@ -60,16 +71,30 @@ LOG_MODULE_REGISTER(spi_mspm0, CONFIG_SPI_LOG_LEVEL);
  */
 #define BYTES_PER_FRAME(word_size) (((word_size) + 7) / 8)
 
+#ifdef CONFIG_SPI_MSPM0_DMA
+struct spi_mspm0_dma_config {
+	const struct device *dev;
+	uint32_t channel;
+	uint32_t slot;
+};
+#endif
+
 struct spi_mspm0_config {
 	DEVICE_MMIO_ROM;
 	const struct mspm0_sys_clock *clock_subsys;
 	const struct pinctrl_dev_config *pinctrl;
 	DL_SPI_CLOCK clock_sel;
+#ifdef CONFIG_SPI_MSPM0_DMA
+	struct spi_mspm0_dma_config dma_tx;
+#endif
 };
 
 struct spi_mspm0_data {
 	DEVICE_MMIO_RAM;
 	struct spi_context spi_ctx;
+#ifdef CONFIG_SPI_MSPM0_DMA
+	struct k_sem dma_done_sem;
+#endif
 };
 
 static inline SPI_Regs *spi_mspm0_regs(const struct device *dev)
@@ -194,17 +219,165 @@ static void spi_mspm0_frame_rx(const struct device *dev, uint8_t dfs)
 	spi_context_update_rx(&data->spi_ctx, dfs, 1);
 }
 
+#ifdef CONFIG_SPI_MSPM0_DMA
+static void spi_mspm0_dma_tx_callback(const struct device *dma_dev, void *user_data,
+				      uint32_t channel, int status)
+{
+	const struct device *spi_dev = user_data;
+	struct spi_mspm0_data *data = spi_dev->data;
+
+	ARG_UNUSED(dma_dev);
+	ARG_UNUSED(channel);
+	ARG_UNUSED(status);
+	k_sem_give(&data->dma_done_sem);
+}
+
+static int spi_mspm0_dma_tx_segment(const struct device *dev,
+				     const void *buf, size_t frames, uint8_t dfs)
+{
+	const struct spi_mspm0_config *config = dev->config;
+	struct spi_mspm0_data *data = dev->data;
+	SPI_Regs *regs = spi_mspm0_regs(dev);
+	struct dma_config dma_cfg = {0};
+	struct dma_block_config blk_cfg = {0};
+	int ret;
+
+	if (frames < SPI_MSPM0_DMA_TX_MIN_FRAMES) {
+		const uint8_t *p = buf;
+
+		for (size_t i = 0; i < frames; i++) {
+			uint32_t tx_frame = 0;
+
+			if (dfs == SPI_DFS_8BIT) {
+				tx_frame = *p;
+			} else if (dfs == SPI_DFS_16BIT) {
+				tx_frame = UNALIGNED_GET((uint16_t *)p);
+			} else {
+				tx_frame = UNALIGNED_GET((uint32_t *)p);
+			}
+			DL_SPI_transmitDataCheck32(regs, tx_frame);
+			p += dfs;
+		}
+		while (DL_SPI_isBusy(regs)) {}
+		return 0;
+	}
+
+	blk_cfg.source_address = (uint32_t)buf;
+	blk_cfg.dest_address = (uint32_t)&regs->TXDATA;
+	blk_cfg.block_size = frames;	/* element count, not bytes */
+	blk_cfg.source_addr_adj = DMA_ADDR_ADJ_INCREMENT;
+	blk_cfg.dest_addr_adj = DMA_ADDR_ADJ_NO_CHANGE;
+
+	dma_cfg.channel_direction = MEMORY_TO_PERIPHERAL;
+	dma_cfg.source_data_size = dfs;
+	dma_cfg.dest_data_size = dfs;
+	dma_cfg.dma_slot = config->dma_tx.slot;
+	dma_cfg.head_block = &blk_cfg;
+	dma_cfg.block_count = 1;
+	dma_cfg.dma_callback = spi_mspm0_dma_tx_callback;
+	dma_cfg.user_data = (void *)dev;
+
+	DL_SPI_enableDMATransmitEvent(regs);
+
+	ret = dma_config(config->dma_tx.dev, config->dma_tx.channel, &dma_cfg);
+	if (ret) {
+		DL_SPI_disableDMATransmitEvent(regs);
+		return ret;
+	}
+
+	ret = dma_start(config->dma_tx.dev, config->dma_tx.channel);
+	if (ret) {
+		DL_SPI_disableDMATransmitEvent(regs);
+		return ret;
+	}
+
+	k_sem_take(&data->dma_done_sem, K_FOREVER);
+	while (DL_SPI_isBusy(regs)) {}
+	DL_SPI_disableDMATransmitEvent(regs);
+
+	return 0;
+}
+#endif /* CONFIG_SPI_MSPM0_DMA */
+
 static void spi_mspm0_start_transfer(const struct device *dev, uint8_t dfs)
 {
 	struct spi_mspm0_data *data = dev->data;
+	SPI_Regs *regs = spi_mspm0_regs(dev);
 
 	spi_context_cs_control(&data->spi_ctx, true);
 
-	while (spi_context_tx_on(&data->spi_ctx) || spi_context_rx_on(&data->spi_ctx)) {
-		spi_mspm0_frame_tx(dev, dfs);
-		spi_mspm0_frame_rx(dev, dfs);
+	if (!spi_context_rx_on(&data->spi_ctx)) {
+#ifdef CONFIG_SPI_MSPM0_DMA
+		const struct spi_mspm0_config *config = dev->config;
+
+		if (config->dma_tx.dev != NULL) {
+			/*
+			 * DMA TX path: CPU sleeps per segment while the DMA
+			 * engine keeps the TX FIFO full from SRAM.  NULL-buffer
+			 * segments (dummy bytes) fall back to the FIFO loop
+			 * below so the clocks still go out on the wire.
+			 */
+			while (spi_context_tx_on(&data->spi_ctx)) {
+				size_t frames = data->spi_ctx.tx_len;
+
+				if (spi_context_tx_buf_on(&data->spi_ctx)) {
+					spi_mspm0_dma_tx_segment(dev,
+						data->spi_ctx.tx_buf,
+						frames, dfs);
+					spi_context_update_tx(&data->spi_ctx,
+							      dfs, frames);
+					continue;
+				}
+				/* NULL buf: send zeros via FIFO */
+				while (frames--) {
+					DL_SPI_transmitDataCheck32(regs, 0);
+				}
+				spi_context_update_tx(&data->spi_ctx, dfs,
+						      data->spi_ctx.tx_len);
+			}
+			while (DL_SPI_isBusy(regs)) {}
+			goto done;
+		}
+#endif /* CONFIG_SPI_MSPM0_DMA */
+		/*
+		 * TX-only FIFO path: pipeline the 4-deep TX FIFO.
+		 * DL_SPI_transmitDataCheck32 backs off when the FIFO is full,
+		 * so the CPU keeps it filled without a per-word isBusy spin.
+		 * One drain wait at the end is all that is needed.
+		 */
+		while (spi_context_tx_on(&data->spi_ctx)) {
+			uint32_t tx_frame = 0;
+
+			if (spi_context_tx_buf_on(&data->spi_ctx)) {
+				if (dfs == SPI_DFS_8BIT) {
+					tx_frame = UNALIGNED_GET(
+						(uint8_t *)(data->spi_ctx.tx_buf));
+				} else if (dfs == SPI_DFS_16BIT) {
+					tx_frame = UNALIGNED_GET(
+						(uint16_t *)(data->spi_ctx.tx_buf));
+				} else {
+					tx_frame = UNALIGNED_GET(
+						(uint32_t *)(data->spi_ctx.tx_buf));
+				}
+			}
+			DL_SPI_transmitDataCheck32(regs, tx_frame);
+			spi_context_update_tx(&data->spi_ctx, dfs, 1);
+		}
+		while (DL_SPI_isBusy(regs)) {
+			/* Drain FIFO before releasing CS */
+		}
+	} else {
+		/* Full-duplex path: RX must stay in sync with TX word-for-word. */
+		while (spi_context_tx_on(&data->spi_ctx) ||
+		       spi_context_rx_on(&data->spi_ctx)) {
+			spi_mspm0_frame_tx(dev, dfs);
+			spi_mspm0_frame_rx(dev, dfs);
+		}
 	}
 
+#ifdef CONFIG_SPI_MSPM0_DMA
+done:
+#endif
 	spi_context_cs_control(&data->spi_ctx, false);
 	spi_context_complete(&data->spi_ctx, dev, 0);
 }
@@ -302,10 +475,37 @@ static int spi_mspm0_init(const struct device *dev)
 	DL_SPI_setClockConfig(regs, (DL_SPI_ClockConfig *)&clk_cfg);
 	DL_SPI_enable(regs);
 
+#ifdef CONFIG_SPI_MSPM0_DMA
+	if (config->dma_tx.dev != NULL) {
+		if (!device_is_ready(config->dma_tx.dev)) {
+			return -ENODEV;
+		}
+		k_sem_init(&data->dma_done_sem, 0, 1);
+	}
+#endif
+
 	spi_context_unlock_unconditionally(&data->spi_ctx);
 
 	return ret;
 }
+
+/*
+ * Populate .dma_tx when CONFIG_SPI_MSPM0_DMA is enabled AND this instance has
+ * a "tx" entry in its dmas property.  Otherwise leave the pointers NULL so
+ * the driver falls back to the FIFO path.
+ */
+#ifdef CONFIG_SPI_MSPM0_DMA
+#define MSPM0_SPI_DMA_TX_INIT(inst)							\
+	IF_ENABLED(DT_INST_DMAS_HAS_NAME(inst, tx), (					\
+		.dma_tx = {								\
+			.dev     = DEVICE_DT_GET(DT_INST_DMAS_CTLR_BY_NAME(inst, tx)),	\
+			.channel = DT_INST_DMAS_CELL_BY_NAME(inst, tx, channel),	\
+			.slot    = DT_INST_DMAS_CELL_BY_NAME(inst, tx, trigger),	\
+		},									\
+	))
+#else
+#define MSPM0_SPI_DMA_TX_INIT(inst)
+#endif
 
 #define MSPM0_SPI_INIT(inst)									\
 	PINCTRL_DT_INST_DEFINE(inst);								\
@@ -318,6 +518,7 @@ static int spi_mspm0_init(const struct device *dev)
 		.clock_subsys = &mspm0_spi_sys_clock##inst,					\
 		.pinctrl = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),				\
 		.clock_sel = MSPM0_CLOCK_PERIPH_REG_MASK(DT_INST_CLOCKS_CELL(inst, clk)),	\
+		MSPM0_SPI_DMA_TX_INIT(inst)							\
 	};											\
 												\
 	static struct spi_mspm0_data spi_mspm0_data_##inst = {					\

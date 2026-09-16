@@ -21,8 +21,15 @@
 	};
 };
 
+&dma {
+	status = "okay";
+};
+
 &spi0 {
 	status = "okay";
+	/* DMA channel 0, SPI0 TX trigger = 13 (DMA_SPI0_TX_TRIG in mspm0g351x.h) */
+	dmas = <&dma 0 13>;
+	dma-names = "tx";
 };
 
 /*
@@ -52,7 +59,27 @@
 	reg = <0x0 DT_SIZE_K(512)>;
 };
 
-&sram1 {
-	compatible = "zephyr,memory-region", "mmio-sram";
-	zephyr,memory-region = "LVGL_BUF";
+/*
+ * Unified 128 KB SRAM region — matches the MSPM0G3519 SDK canonical layout
+ * (mspm0g3519.cmd: SRAM_BANK0 = 0x20200000/64KB, SRAM_BANK1 = 0x20210000/64KB,
+ * comment: "SRAM on this device is continuous memory").
+ *
+ *   0x20200000–0x2020FFFF  64 KB  Bank A, no-ECC alias (no init required)
+ *   0x20210000–0x2021FFFF  64 KB  Bank B               (no ECC)
+ *   ─────────────────────────────────────────────────────────────────────
+ *                         128 KB  = 0x20000 bytes total
+ *
+ * Kernel, stacks, BSS, LVGL VDB and pool all live here as ordinary static
+ * arrays — no separate named region needed.  Estimated layout:
+ *   kernel BSS + stacks  ~20 KB
+ *   VDB  (12%)            36 KB
+ *   pool  (60 KB)         60 KB
+ *   ───────────────────  ──────
+ *   total used           ~116 KB   (10 KB spare)
+ *
+ * Note: Bank B contents are lost in power modes stronger than SLEEP
+ * (SDK linker comment).  Acceptable: the display is off in deep sleep.
+ */
+&sram0 {
+	reg = <0x20200000 DT_SIZE_K(128)>;
 };
