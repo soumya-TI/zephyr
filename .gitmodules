@@ -1,0 +1,4 @@
+[submodule "samples/subsys/display/ti_thermostat_full/ui"]
+	path = samples/subsys/display/ti_thermostat_full/ui
+	url = git@github.com:lvgl-services/ti-thermostat.git
+	branch = optimize/v2

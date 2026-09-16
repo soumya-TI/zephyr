@@ -12,7 +12,7 @@ endif()
 # boards/lp_mspm0g3519.conf (which forces it back to 61440 = 93.75% of sram1).
 # OVERLAY_CONFIG is consumed as EXTRA_CONF_FILE, processed last in the Kconfig
 # merge order: CONF_FILE → shield_conf_files → EXTRA_CONF_FILE.
-list(APPEND OVERLAY_CONFIG "${CMAKE_CURRENT_SOURCE_DIR}/pool_trim.conf")
+
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(ti_thermostat_full)

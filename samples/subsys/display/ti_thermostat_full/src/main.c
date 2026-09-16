@@ -17,6 +17,7 @@
 #include <lvgl.h>
 
 #include "ti_thermostat.h"
+#include "ti_thermostat_gen.h"
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
@@ -32,10 +33,10 @@ int main(void)
 		return 0;
 	}
 
-	/* Build all four screens (home, schedule, rooms, insights), wire subjects
-	 * and the simulator, and load the home screen. Assets are compiled in, so
-	 * the asset-path argument is unused on this target. */
+	/* Build all screens, wire subjects and the simulator. Assets are compiled
+	 * in, so the asset-path argument is unused on this target. */
 	ti_thermostat_init("A:");
+	lv_screen_load(home);
 
 	/* Render one frame, then enable the panel. */
 	lv_timer_handler();
