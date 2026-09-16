@@ -116,5 +116,47 @@
 			compatible = "syscon";
 			reg = <0x4002a000 0x2000>;
 		};
+
+		/*
+		 * GPIO base addresses from AM13E23019 datasheet:
+		 *   GPIO0 = 0x400F_0000, GPIO1 = 0x400F_2000
+		 *   GPIO2 = 0x400F_4000, GPIO3 = 0x400F_6000
+		 * Interrupts TBD from AM13E NVIC table.
+		 */
+		gpioa: gpio@400f0000 {
+			compatible = "ti,mspm0-gpio";
+			reg = <0x400f0000 0x2000>;
+			interrupts = <6 0>;
+			status = "disabled";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		gpiob: gpio@400f2000 {
+			compatible = "ti,mspm0-gpio";
+			reg = <0x400f2000 0x2000>;
+			interrupts = <7 0>;
+			status = "disabled";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		gpioc: gpio@400f4000 {
+			compatible = "ti,mspm0-gpio";
+			reg = <0x400f4000 0x2000>;
+			interrupts = <8 0>;
+			status = "disabled";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		gpiod: gpio@400f6000 {
+			compatible = "ti,mspm0-gpio";
+			reg = <0x400f6000 0x2000>;
+			interrupts = <9 0>;
+			status = "disabled";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
 	};
 };

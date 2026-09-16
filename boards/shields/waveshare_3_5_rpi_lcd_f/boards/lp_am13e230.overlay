@@ -1,0 +1,113 @@
+/*
+ * Copyright (c) 2026 Texas Instruments
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Waveshare 3.5" RPi LCD (F) on LP-AM13E230.
+ *
+ * GPIO map (from AM13E23019 datasheet + am13e23019-pinctrl.dtsi):
+ *   GPIO0 @ 0x400F_0000 = Port A (PA0-PA31)
+ *   GPIO1 @ 0x400F_2000 = Port B (PB0-PB31)
+ *
+ * UNICOMM0 SPI (display ST7796S):
+ *   PA4  → uc0_rts_poci_pa4   (MISO, MSP_PINMUX(5,6))
+ *   PA6  → uc0_cts_cs0_pa6    (CS,   MSP_PINMUX(7,6))
+ *   PA7  → uc0_tx_sda_pico_pa7 (MOSI, MSP_PINMUX(8,6))
+ *   PA8  → uc0_rx_scl_sclk_pa8 (SCLK, MSP_PINMUX(9,3))
+ *   PA25 → gpio (DC)
+ *   PA17 → gpio (LCD RESET)
+ *   PA18 → gpio (BACKLIGHT)
+ *
+ * UNICOMM1 I2C (GT911 touch):
+ *   PA2  → uc1_tx_sda_pico_pa2 (SDA, MSP_PINMUX(3,8))
+ *   PA3  → uc1_rx_scl_sclk_pa3 (SCL, MSP_PINMUX(4,8))
+ *   PA13 → gpio (GT911 IRQ)
+ *   PA16 → gpio (GT911 RESET)
+ *
+ * Wire the Waveshare 3.5" (F) RPi 40-pin connector to LP-AM13E230
+ * header pins exposing the above GPIOs. See pin suggestion table in
+ * README / commit message for physical connector mapping.
+ */
+
+#include <zephyr/dt-bindings/i2c/i2c.h>
+
+&waveshare_3_5_rpi_lcd_f_mipi_dbi {
+	dc-gpios    = <&gpioa 25 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&gpioa 17 GPIO_ACTIVE_LOW>;
+	spi-dev     = <&unicomm0_spi>;
+};
+
+/ {
+	display_backlight: display-backlight {
+		compatible = "regulator-fixed";
+		regulator-name = "display-backlight";
+		enable-gpios = <&gpioa 18 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+	};
+};
+
+&gpioa {
+	status = "okay";
+};
+
+/* Enable UNICOMM0 as SPI for ST7796S display */
+&unicomm0 {
+	status = "okay";
+};
+
+&unicomm0_spi {
+	status = "okay";
+	pinctrl-0 = <&uc0_rx_scl_sclk_pa8
+	             &uc0_tx_sda_pico_pa7
+	             &uc0_rts_poci_pa4
+	             &uc0_cts_cs0_pa6>;
+	pinctrl-names = "default";
+	clock-frequency = <20000000>;
+
+	/* ST7796S display — same init sequence as MSPM0G variant */
+	st7796s: st7796s@0 {
+		compatible = "sitronix,st7796s";
+		reg = <0>;
+		spi-max-frequency = <20000000>;
+		cmd-data-gpios = <&gpioa 25 GPIO_ACTIVE_LOW>;
+		reset-gpios    = <&gpioa 17 GPIO_ACTIVE_LOW>;
+		width  = <320>;
+		height = <480>;
+		x-offset = <0>;
+		y-offset = <0>;
+		invert-mode = "1-dot";
+		frmctl1 = [80 10];
+		bpc = [1F 50 00 20];
+		dfc = [8A 07 3B];
+		pwr1 = [0F];
+		pwr2 = [01];
+		pwr3 = [A7];
+		pvgam = [F0 06 0B 07 07 24 54 44 4F 0F 16 18 2F 31];
+		nvgam = [F0 09 0D 11 13 2C 3F 44 51 0F 16 17 2B 31];
+		ram-param = [00 E8];
+		rgb-settings = [CD];
+		madctl = <0x48>;
+	};
+};
+
+/* Enable UNICOMM1 as I2C for GT911 touch controller */
+&unicomm1 {
+	status = "okay";
+};
+
+&unicomm1_i2c {
+	status = "okay";
+	pinctrl-0 = <&uc1_tx_sda_pico_pa2 &uc1_rx_scl_sclk_pa3>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	gt911_touch: gt911@5d {
+		compatible = "goodix,gt911";
+		reg = <0x5d>;
+		alt-addr = <0x14>;
+		irq-gpios   = <&gpioa 13 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpioa 16 GPIO_ACTIVE_LOW>;
+		screen-width  = <320>;
+		screen-height = <480>;
+	};
+};

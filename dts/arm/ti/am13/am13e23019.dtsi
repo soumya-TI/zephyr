@@ -92,6 +92,20 @@
 				clocks = <&ckm MSPM0_CLOCK_MCLK_DIV_2>;
 				status = "disabled";
 			};
+
+			/*
+			 * UNICOMM0 as SPI — shares IP base with UART (same HW block,
+			 * protocol selected via IPMODE). Verify reg address from TRM.
+			 */
+			unicomm0_spi: unicomm0_spi@40600000 {
+				reg = <0x40600000 DT_SIZE_K(8)>;
+				compatible = "ti,unicomm-spi";
+				interrupts = <50 0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&ckm MSPM0_CLOCK_MCLK>;
+				status = "disabled";
+			};
 		};
 
 		unicomm1: unicomm1@40632000 {
@@ -110,6 +124,23 @@
 				compatible = "ti,mspm0-uart";
 				is-unicomm-uart;
 				clocks = <&ckm MSPM0_CLOCK_MCLK_DIV_2>;
+				status = "disabled";
+			};
+
+			/*
+			 * UNICOMM1 as I2C — controller + target share UNICOMM1 IP.
+			 * reg-names "controller"/"target" with +0x1000 driver offset.
+			 * Verify both addresses from AM13E TRM Section (I2C).
+			 */
+			unicomm1_i2c: unicomm1_i2c@40601000 {
+				compatible = "ti,unicomm-i2c";
+				reg = <0x40601000 DT_SIZE_K(4)>,
+				      <0x40605000 DT_SIZE_K(4)>;
+				reg-names = "controller", "target";
+				interrupts = <51 0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&ckm MSPM0_CLOCK_MCLK>;
 				status = "disabled";
 			};
 		};

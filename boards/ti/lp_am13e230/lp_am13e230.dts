@@ -7,7 +7,7 @@
 /dts-v1/;
 
 #include <ti/am13/am13e23019.dtsi>
-#include <zephyr/dt-bindings/pinctrl/am13-pinctrl.h>
+#include <ti/am13/am13e23019-pinctrl.dtsi>
 
 / {
 	model = "TI AM13E230X Launchpad";
@@ -43,17 +43,6 @@
 	ti,xtal-startup-delay-us = <500>;
 };
 
-&pinctrl {
-	pa0_uc4_tx: pa0_uc4_tx {
-		pinmux = <AM13_PINMUX(0, MSPM0_PIN_FUNCTION_7)>;
-	};
-
-	pa1_uc4_rx: pa1_uc4_rx {
-		pinmux = <AM13_PINMUX(1, MSPM0_PIN_FUNCTION_7)>;
-		input-enable;
-	};
-};
-
 &unicomm4 {
 	status = "okay";
 };
@@ -61,7 +50,6 @@
 &unicomm4_uart {
 	status = "okay";
 	current-speed = <115200>;
-
-	pinctrl-0 = <&pa0_uc4_tx &pa1_uc4_rx>;
+	pinctrl-0 = <&uc4_tx_sda_pico_pa0 &uc4_rx_scl_sclk_pa1>;
 	pinctrl-names = "default";
 };
