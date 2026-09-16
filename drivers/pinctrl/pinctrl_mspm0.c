@@ -16,10 +16,10 @@ LOG_MODULE_REGISTER(pinctrl_mspm0, CONFIG_PINCTRL_LOG_LEVEL);
 #define MSPM0_PIN_FUNCTION(pinmux)	(pinmux & 0x3F)
 
 /*
- * The pin-controller's `reg` already points at PINCM index 0. Any leading
- * reserved word before the PINCM array (present on mspm0/mspm33c, absent on
- * AM13) is accounted for in each SoC's own devicetree `reg`, not here, so
- * this formula stays the same across families.
+ * Each SoC's devicetree `reg` already points at PINCM index 0:
+ *   MSPM0/MSPM33C: reg = IOMUX_BASE + 4  (skips reserved word before PINCM[0])
+ *   AM13E:         reg = IOMUX_BASE + 0  (no reserved word; PINCM[0] is first)
+ * So the formula `reg + n*4` works unchanged across all families.
  * Each PINCM register is 4 bytes wide.
  * Bit 7 (PC) must be set to connect the pin to a peripheral function.
  */
