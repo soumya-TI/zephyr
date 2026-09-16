@@ -10,3 +10,13 @@ config SPI_MSPM0
 	select GPIO
 	help
 	 Enable support for TI MSPM0 SPI peripheral.
+
+config SPI_MSPM0_DMA
+	bool "TI MSPM0 SPI DMA support"
+	default y
+	depends on SPI_MSPM0 && DMA_TI_MSPM0
+	help
+	 Enable DMA-driven TX for write-only SPI transfers (e.g. display).
+	 The CPU sleeps during the transfer instead of busy-spinning on the
+	 TX FIFO, freeing cycles for LVGL rendering.  Full-duplex transfers
+	 always use the polled path.

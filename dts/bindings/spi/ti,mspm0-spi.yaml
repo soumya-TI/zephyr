@@ -16,3 +16,15 @@ properties:
 
   clocks:
     required: true
+
+  dmas:
+    description: |
+      Optional TX (and RX) DMA channel specifiers.
+      Each entry is <&dma channel trigger> where channel is the DMA channel
+      index (0-based) and trigger is the hardware trigger ID (e.g. 13 for
+      SPI0 TX, 15 for SPI1 TX on MSPM0G351x).
+
+  dma-names:
+    description: |
+      DMA channel names.  Use "tx" for the transmit channel and "rx" for
+      the receive channel.
