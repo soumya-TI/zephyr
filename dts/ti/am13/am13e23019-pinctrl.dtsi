@@ -7,6 +7,13 @@
 #include <zephyr/dt-bindings/pinctrl/mspm0-pinctrl.h>
 
 &pinctrl {
+	/* Sentinel for non-bonded (package-absent) GPIO pins.
+	 * Reference &no_pin in the GPIO port's pinmux list for any slot
+	 * that has no physical bond wire on this package. */
+	no_pin: no_pin {
+		pinmux = <0>;
+	};
+
 	/* PA0 */
 	/omit-if-no-ref/ analog_pa0: analog_pa0 {
 		pinmux = <MSP_PINMUX(1, 0)>;
