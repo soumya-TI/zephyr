@@ -131,7 +131,7 @@ static inline void i2cc_send_frame(uint32_t base)
 static inline void i2cc_wait_not_busy(uint32_t base)
 {
 	while (I2CC_IS_BUSY(base)) {
-		k_sleep(K_CYC(20));
+		// k_sleep(K_CYC(20));
 	}
 }
 
@@ -171,6 +171,8 @@ static inline void i2ct_send_nack(uint32_t base)
 }
 #endif /* CONFIG_I2C_TARGET */
 
+static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_config);
+
 static int i2c_ti_unicomm_init(const struct device *dev)
 {
 	const struct i2c_ti_unicomm_config *cfg = dev->config;
@@ -200,6 +202,8 @@ static int i2c_ti_unicomm_init(const struct device *dev)
 			    I2CC_CONFIG_CLKSTRETCH_ENABLE,
 		    cfg->unicomm_i2cc_base + UNICOMM_I2CC_CONFIG);
 
+	i2c_ti_unicomm_configure(dev, I2C_MODE_CONTROLLER | I2C_SPEED_FAST);
+
 	LOG_INF("I2C Controller init done for 0x%08x", cfg->unicomm_i2cc_base);
 
 	return 0;
@@ -216,20 +220,20 @@ static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_confi
 	int ret;
 
 	/* Reset a controller device */
-	if ((dev_config & I2C_MODE_CONTROLLER)) {
-		/* Changing controller/target mode at runtime is not supported */
-		if (data->is_target == true) {
-			return -ENOTSUP;
-		}
+	// if ((dev_config & I2C_MODE_CONTROLLER)) {
+	// 	/* Changing controller/target mode at runtime is not supported */
+	// 	if (data->is_target == true) {
+	// 		return -ENOTSUP;
+	// 	}
 
-		ret = i2c_ti_unicomm_init(dev);
+	// 	ret = i2c_ti_unicomm_init(dev);
 
-		if (ret < 0) {
-			return ret;
-		}
-	} else {
-		return -ENOTSUP;
-	}
+	// 	if (ret < 0) {
+	// 		return ret;
+	// 	}
+	// } else {
+	// 	return -ENOTSUP;
+	// }
 
 	switch (I2C_SPEED_GET(dev_config)) {
 	case I2C_SPEED_STANDARD:
@@ -245,6 +249,8 @@ static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_confi
 		return -ENOTSUP;
 	}
 
+	speed_hz = 400000U;
+
 	/* Retrieve the input clock frequency via clock control */
 	ret = clock_control_get_rate(DEVICE_DT_GET(DT_NODELABEL(ckm)),
 				     (clock_control_subsys_t)cfg->clock_subsys, &busclk_hz);
@@ -252,11 +258,15 @@ static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_confi
 		return ret;
 	}
 
+	printk("busclk_hz=%d, clkdiv=%d, speed_hz=%d\n", busclk_hz, cfg->clkdiv, speed_hz);
+
 	/* Functional clock = BUSCLK / (clkdiv_reg_value + 1) */
 	functional_clk_hz = busclk_hz / ((uint32_t)cfg->clkdiv + 1U);
+	printk("functional_clk_hz=%d\n", functional_clk_hz);
 
 	/* TPR = functional_clk_hz / (SCL_LP_HP * speed_hz) - 1 */
 	tpr = functional_clk_hz / (I2CC_SCL_LP_HP * speed_hz);
+	printk("tpr=%d\n", tpr);
 	if (tpr == 0U) {
 		return -EINVAL;
 	}
@@ -383,7 +393,7 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 				while (bytes_received < msg.len) {
 					/* Wait until a byte arrives or the transfer ends */
 					while (I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base)) {
-						k_sleep(K_CYC(20));
+						// k_sleep(K_CYC(20));
 					}
 
 					while (!I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base) &&
@@ -421,7 +431,7 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 					 * forever if the pulse is missed.
 					 */
 					while (I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base)) {
-						k_sleep(K_CYC(20));
+						// k_sleep(K_CYC(20));
 					}
 
 					msg.buf[b] = sys_read32(cfg->unicomm_i2cc_base +
