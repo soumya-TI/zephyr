@@ -34,11 +34,12 @@
 			reg = <0>;
 			/*
 			 * SPI src clock is 80MHz and the divider is integer
-			 * (clock/2/(SCR+1)): 25MHz rounds down to 20MHz (SCR=1),
-			 * while 40MHz hits SCR=0 = the 40MHz hardware max, i.e.
-			 * double the pixel throughput. The panel/ST7796S handle it.
+			 * (clock/2/(SCR+1)): 20MHz = SCR=1, 40MHz = SCR=0.
+			 * 40MHz is the UNICOMM hardware max but may be marginal
+			 * over long BoosterPack jumper wires; use 20MHz for
+			 * reliable signal integrity.
 			 */
-			mipi-max-frequency = <40000000>;
+			mipi-max-frequency = <10000000>;
 			invert-mode = "1-dot";
 			color-invert;
 			/*

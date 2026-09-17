@@ -77,14 +77,14 @@
 		unicomm0: unicomm0@40630000 {
 			reg = <0x40630000 DT_SIZE_K(8)>;
 			compatible = "ti,unicomm";
-			interrupts = <50 0>;
+			interrupts = <34 0>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			status = "disabled";
 
 			unicomm0_uart: unicomm0_uart@40600000 {
 				reg = <0x40600000 DT_SIZE_K(8)>;
-				interrupts = <50 0>;
+				interrupts = <34 0>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				compatible = "ti,mspm0-uart";
@@ -93,14 +93,11 @@
 				status = "disabled";
 			};
 
-			/*
-			 * UNICOMM0 as SPI — shares IP base with UART (same HW block,
-			 * protocol selected via IPMODE). Verify reg address from TRM.
-			 */
-			unicomm0_spi: unicomm0_spi@40600000 {
-				reg = <0x40600000 DT_SIZE_K(8)>;
+			/* UNICOMM0 as SPI (UC0_SPI_BASE = 0x40618000 per AM13E TRM) */
+			unicomm0_spi: unicomm0_spi@40618000 {
+				reg = <0x40618000 DT_SIZE_K(8)>;
 				compatible = "ti,unicomm-spi";
-				interrupts = <50 0>;
+				interrupts = <34 0>;
 				#address-cells = <1>;
 				#size-cells = <0>;
 				clocks = <&ckm MSPM0_CLOCK_MCLK>;
@@ -111,14 +108,14 @@
 		unicomm1: unicomm1@40632000 {
 			reg = <0x40632000 DT_SIZE_K(8)>;
 			compatible = "ti,unicomm";
-			interrupts = <51 0>;
+			interrupts = <35 0>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			status = "disabled";
 
 			unicomm1_uart: unicomm1_uart@40601000 {
 				reg = <0x40601000 DT_SIZE_K(8)>;
-				interrupts = <51 0>;
+				interrupts = <35 0>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				compatible = "ti,mspm0-uart";
@@ -127,17 +124,13 @@
 				status = "disabled";
 			};
 
-			/*
-			 * UNICOMM1 as I2C — controller + target share UNICOMM1 IP.
-			 * reg-names "controller"/"target" with +0x1000 driver offset.
-			 * Verify both addresses from AM13E TRM Section (I2C).
-			 */
-			unicomm1_i2c: unicomm1_i2c@40601000 {
+			/* UNICOMM1 as I2C — basic instance (UC1_I2CC=0x40609000, UC1_I2CT=0x40611000) */
+			unicomm1_i2c: unicomm1_i2c@40609000 {
 				compatible = "ti,unicomm-i2c";
-				reg = <0x40601000 DT_SIZE_K(4)>,
-				      <0x40605000 DT_SIZE_K(4)>;
+				reg = <0x40609000 DT_SIZE_K(4)>,
+				      <0x40611000 DT_SIZE_K(4)>;
 				reg-names = "controller", "target";
-				interrupts = <51 0>;
+				interrupts = <35 0>;
 				#address-cells = <1>;
 				#size-cells = <0>;
 				clocks = <&ckm MSPM0_CLOCK_MCLK>;
@@ -148,19 +141,34 @@
 		unicomm2: unicomm2@40634000 {
 			reg = <0x40634000 DT_SIZE_K(8)>;
 			compatible = "ti,unicomm";
-			interrupts = <52 0>;
+			interrupts = <36 0>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			status = "disabled";
 
 			unicomm2_uart: unicomm2_uart@40602000 {
 				reg = <0x40602000 DT_SIZE_K(8)>;
-				interrupts = <52 0>;
+				interrupts = <36 0>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				compatible = "ti,mspm0-uart";
 				is-unicomm-uart;
 				clocks = <&ckm MSPM0_CLOCK_MCLK_DIV_2>;
+				status = "disabled";
+			};
+
+			/* UNICOMM2 as I2C — advanced instance (burst, analog glitch filter, SMBus).
+			 * PA22=SDA, PA23=SCL with board pull-ups J18/J17. */
+			unicomm2_i2c: unicomm2_i2c@4060a000 {
+				compatible = "ti,unicomm-i2c";
+				reg = <0x4060a000 DT_SIZE_K(4)>,
+				      <0x40612000 DT_SIZE_K(4)>;
+				reg-names = "controller", "target";
+				interrupts = <36 0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&ckm MSPM0_CLOCK_MCLK>;
+				unicomm-advanced-i2c;
 				status = "disabled";
 			};
 		};
@@ -168,14 +176,14 @@
 		unicomm3: unicomm3@40670000 {
 			reg = <0x40670000 DT_SIZE_K(8)>;
 			compatible = "ti,unicomm";
-			interrupts = <53 0>;
+			interrupts = <37 0>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			status = "disabled";
 
 			unicomm3_uart: unicomm3_uart@40640000 {
 				reg = <0x40640000 DT_SIZE_K(8)>;
-				interrupts = <53 0>;
+				interrupts = <37 0>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				compatible = "ti,mspm0-uart";
@@ -183,19 +191,30 @@
 				clocks = <&ckm MSPM0_CLOCK_MCLK_DIV_2>;
 				status = "disabled";
 			};
+
+			/* UNICOMM3 as SPI — BoosterPack std SPI position (J1-7/J2-14/15/19) */
+			unicomm3_spi: unicomm3_spi@40658000 {
+				reg = <0x40658000 DT_SIZE_K(8)>;
+				compatible = "ti,unicomm-spi";
+				interrupts = <37 0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&ckm MSPM0_CLOCK_MCLK>;
+				status = "disabled";
+			};
 		};
 
 		unicomm4: unicomm4@40672000 {
 			reg = <0x40672000 DT_SIZE_K(8)>;
 			compatible = "ti,unicomm";
-			interrupts = <54 0>;
+			interrupts = <38 0>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			status = "disabled";
 
 			unicomm4_uart: unicomm4_uart@40641000 {
 				reg = <0x40641000 DT_SIZE_K(8)>;
-				interrupts = <54 0>;
+				interrupts = <38 0>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				compatible = "ti,mspm0-uart";
@@ -208,14 +227,14 @@
 		unicomm5: unicomm5@40674000 {
 			reg = <0x40674000 DT_SIZE_K(8)>;
 			compatible = "ti,unicomm";
-			interrupts = <55 0>;
+			interrupts = <39 0>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			status = "disabled";
 
 			unicomm5_uart: unicomm5_uart@40642000 {
 				reg = <0x40642000 DT_SIZE_K(8)>;
-				interrupts = <55 0>;
+				interrupts = <39 0>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				compatible = "ti,mspm0-uart";

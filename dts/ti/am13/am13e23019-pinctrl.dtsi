@@ -470,6 +470,8 @@
 	/omit-if-no-ref/ uc1_rx_scl_sclk_pa9: uc1_rx_scl_sclk_pa9 {
 		pinmux = <MSP_PINMUX(10, 5)>;
 		input-enable;
+		drive-open-drain;
+		bias-disable;
 	};
 
 	/omit-if-no-ref/ uc4_rx_scl_sclk_pa9: uc4_rx_scl_sclk_pa9 {
@@ -536,6 +538,9 @@
 
 	/omit-if-no-ref/ uc1_tx_sda_pico_pa10: uc1_tx_sda_pico_pa10 {
 		pinmux = <MSP_PINMUX(11, 6)>;
+		input-enable;
+		drive-open-drain;
+		bias-disable;
 	};
 
 	/omit-if-no-ref/ mcpwm0_3a_pa10: mcpwm0_3a_pa10 {
@@ -1184,6 +1189,9 @@
 
 	/omit-if-no-ref/ uc2_tx_sda_pa22: uc2_tx_sda_pa22 {
 		pinmux = <MSP_PINMUX(23, 4)>;
+		input-enable;
+		drive-open-drain;
+		bias-disable;
 	};
 
 	/omit-if-no-ref/ mcpwm4_2b_pa22: mcpwm4_2b_pa22 {
@@ -1254,6 +1262,8 @@
 	/omit-if-no-ref/ uc2_rx_scl_pa23: uc2_rx_scl_pa23 {
 		pinmux = <MSP_PINMUX(24, 4)>;
 		input-enable;
+		drive-open-drain;
+		bias-disable;
 	};
 
 	/omit-if-no-ref/ uc0_tx_sda_pico_pa23: uc0_tx_sda_pico_pa23 {

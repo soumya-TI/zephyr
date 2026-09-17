@@ -62,6 +62,10 @@
 	status = "okay";
 };
 
+&gpioa {
+	status = "okay";
+};
+
 &unicomm4 {
 	status = "okay";
 };
@@ -72,3 +76,56 @@
 	pinctrl-0 = <&uc4_tx_sda_pico_pa0 &uc4_rx_scl_sclk_pa1>;
 	pinctrl-names = "default";
 };
+
+// &unicomm3 {
+// 	status = "okay";
+// };
+
+// /*
+//  * CS is software (GPIO) controlled so the SPI context can keep it asserted
+//  * throughout the entire pixel-data burst.  PA21 is NOT muxed to the UNICOMM
+//  * CTS/CS0 function — it stays as a plain GPIO driven by the SPI context.
+//  */
+// &unicomm3_spi {
+// 	status = "okay";
+// 	pinctrl-0 = <&uc3_rx_scl_sclk_pb5
+// 	             &uc3_tx_sda_pico_pb10
+// 	             &uc3_rts_poci_pa20>;
+// 	pinctrl-names = "default";
+// 	cs-gpios = <&gpioa 21 GPIO_ACTIVE_LOW>;
+// 	/* SPI frequency is set via mipi-max-frequency on the display node */
+// };
+
+// &unicomm2 {
+// 	status = "okay";
+// };
+
+// &unicomm2_i2c {
+// 	status = "okay";
+// 	pinctrl-0 = <&uc2_tx_sda_pa22 &uc2_rx_scl_pa23>;
+// 	pinctrl-names = "default";
+
+// 	eeprom0: eeprom@54 {
+// 		compatible = "zephyr,i2c-target-eeprom";
+// 		reg = <0x54>;
+// 		address-width = <8>;
+// 		size = <256>;
+// 	};
+// };
+
+// &unicomm1 {
+// 	status = "okay";
+// };
+
+// &unicomm1_i2c {
+// 	status = "okay";
+// 	pinctrl-0 = <&uc1_tx_sda_pico_pa10 &uc1_rx_scl_sclk_pa9>;
+// 	pinctrl-names = "default";
+
+// 	eeprom1: eeprom@56 {
+// 		compatible = "zephyr,i2c-target-eeprom";
+// 		reg = <0x56>;
+// 		address-width = <8>;
+// 		size = <256>;
+// 	};
+// };

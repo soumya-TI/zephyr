@@ -128,11 +128,36 @@ static inline void i2cc_send_frame(uint32_t base)
 		   UNICOMM_I2CC_CONTROL_FRAME_START_MASK);
 }
 
-static inline void i2cc_wait_not_busy(uint32_t base)
+/* Bus glitches / a NACKed byte can leave BUSY or RXFIFOEMPTY stuck forever
+ * with no HW abort indication reaching these bits, so every wait below is
+ * bounded instead of spinning indefinitely.
+ */
+#define I2C_TI_UNICOMM_TIMEOUT_MS 100
+
+static inline int i2cc_wait_not_busy(uint32_t base)
 {
+	int64_t deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
+
 	while (I2CC_IS_BUSY(base)) {
-		k_sleep(K_CYC(20));
+		if (k_uptime_get() > deadline) {
+			return -ETIMEDOUT;
+		}
 	}
+
+	return 0;
+}
+
+static inline int i2cc_wait_rx_not_empty(uint32_t base)
+{
+	int64_t deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
+
+	while (I2CC_IS_RX_FIFO_EMPTY(base)) {
+		if (k_uptime_get() > deadline) {
+			return -ETIMEDOUT;
+		}
+	}
+
+	return 0;
 }
 
 static inline void i2cc_set_blen(uint32_t base, uint32_t len)
@@ -171,6 +196,8 @@ static inline void i2ct_send_nack(uint32_t base)
 }
 #endif /* CONFIG_I2C_TARGET */
 
+static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_config);
+
 static int i2c_ti_unicomm_init(const struct device *dev)
 {
 	const struct i2c_ti_unicomm_config *cfg = dev->config;
@@ -200,6 +227,8 @@ static int i2c_ti_unicomm_init(const struct device *dev)
 			    I2CC_CONFIG_CLKSTRETCH_ENABLE,
 		    cfg->unicomm_i2cc_base + UNICOMM_I2CC_CONFIG);
 
+	i2c_ti_unicomm_configure(dev, I2C_MODE_CONTROLLER | I2C_SPEED_FAST);
+
 	LOG_INF("I2C Controller init done for 0x%08x", cfg->unicomm_i2cc_base);
 
 	return 0;
@@ -216,20 +245,20 @@ static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_confi
 	int ret;
 
 	/* Reset a controller device */
-	if ((dev_config & I2C_MODE_CONTROLLER)) {
-		/* Changing controller/target mode at runtime is not supported */
-		if (data->is_target == true) {
-			return -ENOTSUP;
-		}
+	// if ((dev_config & I2C_MODE_CONTROLLER)) {
+	// 	/* Changing controller/target mode at runtime is not supported */
+	// 	if (data->is_target == true) {
+	// 		return -ENOTSUP;
+	// 	}
 
-		ret = i2c_ti_unicomm_init(dev);
+	// 	ret = i2c_ti_unicomm_init(dev);
 
-		if (ret < 0) {
-			return ret;
-		}
-	} else {
-		return -ENOTSUP;
-	}
+	// 	if (ret < 0) {
+	// 		return ret;
+	// 	}
+	// } else {
+	// 	return -ENOTSUP;
+	// }
 
 	switch (I2C_SPEED_GET(dev_config)) {
 	case I2C_SPEED_STANDARD:
@@ -245,6 +274,8 @@ static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_confi
 		return -ENOTSUP;
 	}
 
+	speed_hz = 400000U;
+
 	/* Retrieve the input clock frequency via clock control */
 	ret = clock_control_get_rate(DEVICE_DT_GET(DT_NODELABEL(ckm)),
 				     (clock_control_subsys_t)cfg->clock_subsys, &busclk_hz);
@@ -252,15 +283,19 @@ static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_confi
 		return ret;
 	}
 
+	printk("busclk_hz=%d, clkdiv=%d, speed_hz=%d\n", busclk_hz, cfg->clkdiv, speed_hz);
+
 	/* Functional clock = BUSCLK / (clkdiv_reg_value + 1) */
 	functional_clk_hz = busclk_hz / ((uint32_t)cfg->clkdiv + 1U);
+	printk("functional_clk_hz=%d\n", functional_clk_hz);
 
 	/* TPR = functional_clk_hz / (SCL_LP_HP * speed_hz) - 1 */
 	tpr = functional_clk_hz / (I2CC_SCL_LP_HP * speed_hz);
+	printk("tpr=%d\n", tpr);
 	if (tpr == 0U) {
 		return -EINVAL;
 	}
-	tpr -= 1U;
+	tpr -= 1U;	
 
 	if (tpr < 1U || tpr > 127U) {
 		return -EINVAL;
@@ -312,6 +347,8 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 				i2cc_send_frame(cfg->unicomm_i2cc_base);
 
 				/* Polling Write */
+				int64_t deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
+
 				while (bytes_sent < msg.len) {
 					if (!I2CC_IS_TX_FIFO_FULL(cfg->unicomm_i2cc_base)) {
 						filled = i2cc_fill_tx_fifo(cfg->unicomm_i2cc_base,
@@ -320,13 +357,20 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 
 						buf_ptr += filled;
 						bytes_sent += filled;
+						deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
 					} else if (!I2CC_IS_BUSY(cfg->unicomm_i2cc_base)) {
 						/* HW aborted (e.g. NACK): FIFO not draining */
 						return -EIO;
+					} else if (k_uptime_get() > deadline) {
+						return -ETIMEDOUT;
 					}
 				}
 
-				i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+				int ret = i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+
+				if (ret < 0) {
+					return ret;
+				}
 			} else {
 				/* Non-advanced: one byte per FRM_START trigger.
 				 * START_ENABLE only on the first byte to generate START+address.
@@ -352,7 +396,11 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 
 					i2cc_send_frame(cfg->unicomm_i2cc_base);
 
-					i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+					int ret = i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+
+					if (ret < 0) {
+						return ret;
+					}
 				}
 
 				/* Send STOP condition */
@@ -382,8 +430,10 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 				/* Polling Read */
 				while (bytes_received < msg.len) {
 					/* Wait until a byte arrives or the transfer ends */
-					while (I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base)) {
-						k_sleep(K_CYC(20));
+					int ret = i2cc_wait_rx_not_empty(cfg->unicomm_i2cc_base);
+
+					if (ret < 0) {
+						return ret;
 					}
 
 					while (!I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base) &&
@@ -420,8 +470,10 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 					 * the bus idles between bytes, causing while(!BUSY) to spin
 					 * forever if the pulse is missed.
 					 */
-					while (I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base)) {
-						k_sleep(K_CYC(20));
+					int ret = i2cc_wait_rx_not_empty(cfg->unicomm_i2cc_base);
+
+					if (ret < 0) {
+						return ret;
 					}
 
 					msg.buf[b] = sys_read32(cfg->unicomm_i2cc_base +
@@ -676,8 +728,8 @@ static DEVICE_API(i2c, i2c_ti_unicomm_api) = {.configure = i2c_ti_unicomm_config
 	static const struct i2c_ti_unicomm_config i2c_config_##index = {                           \
 		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(index),                                     \
 		.unicomm_base = DT_REG_ADDR(DT_INST_PARENT(index)),                                \
-		.unicomm_i2cc_base = DT_INST_REG_ADDR_BY_NAME(index, controller) + 0x1000U,        \
-		.unicomm_i2ct_base = DT_INST_REG_ADDR_BY_NAME(index, target) + 0x1000U,            \
+		.unicomm_i2cc_base = DT_INST_REG_ADDR_BY_NAME(index, controller),        \
+		.unicomm_i2ct_base = DT_INST_REG_ADDR_BY_NAME(index, target),            \
 		.unicomm_is_advanced = DT_INST_PROP(index, unicomm_advanced_i2c),                  \
 		.clkdiv = CLKDIV_DIVIDE_BY_1,                                                      \
 		.clock_subsys = &i2c_ti_unicomm_clock_subsys_##index,                              \

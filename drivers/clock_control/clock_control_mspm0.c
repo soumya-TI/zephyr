@@ -1911,6 +1911,8 @@ static int clock_mspm0_init(const struct device *dev)
 #endif /* DT_CANCLK_OKAY */
 
 	LOG_DBG("MSPM0 clock tree initialized");
+	
+	syscon_write_reg(cfg->sysctl, 0x14a4, 0x0);
 
 	return 0;
 }

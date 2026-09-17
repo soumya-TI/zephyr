@@ -378,7 +378,7 @@ static DEVICE_API(gpio, gpio_mspm0_driver_api) = {
 	{                                                                                          \
 		ARG_UNUSED(dev);                                                                   \
 		IRQ_CONNECT(DT_IRQ_BY_IDX(n, 0, irq), DT_IRQ_BY_IDX(n, 0, priority),             \
-			    gpio_mspm0_isr, NULL, 0);                                              \
+			    gpio_mspm0_isr, DEVICE_DT_GET(n), 0);                                              \
 		irq_enable(DT_IRQ_BY_IDX(n, 0, irq));                                             \
 	}                                                                                          \
 	static const uint32_t gpio##__suffix##_pinmux[] = {                                       \

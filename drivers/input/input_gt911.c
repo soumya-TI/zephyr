@@ -135,6 +135,7 @@ static int gt911_process(const struct device *dev)
 	/* obtain number of touch points */
 	reg_addr = sys_cpu_to_be16(GT911_REG_STATUS);
 	r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), &status, sizeof(status));
+	k_msleep(5);
 	if (r < 0) {
 		return r;
 	}
