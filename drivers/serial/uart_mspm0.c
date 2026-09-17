@@ -214,8 +214,12 @@ typedef struct {
  * PRE_KERNEL_1, before the Zephyr system clock (cortex_m_systick.c) has
  * started SysTick at PRE_KERNEL_2. Until then sys_clock_cycle_get_32()
  * always returns 0, causing k_busy_wait() to spin forever.
+ *
+ * soc.h unconditionally pulls in dl_core.h which defines delay_cycles as
+ * a macro pointing to DL_Common_delayCycles. Undefine it so the native
+ * inline below is used regardless of CONFIG_HAS_MSPM0_SDK.
  */
-#ifndef CONFIG_HAS_MSPM0_SDK
+#undef delay_cycles
 static inline void delay_cycles(uint32_t cycles)
 {
 	uint32_t scratch;
@@ -229,7 +233,6 @@ static inline void delay_cycles(uint32_t cycles)
 		       : "=&r"(scratch)
 		       : [c] "r"(cycles));
 }
-#endif /* !CONFIG_HAS_MSPM0_SDK */
 
 /*
  * Highest UART Receive Interrupt Timeout
