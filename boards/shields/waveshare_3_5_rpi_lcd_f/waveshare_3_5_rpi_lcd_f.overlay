@@ -39,7 +39,7 @@
 			 * over long BoosterPack jumper wires; use 20MHz for
 			 * reliable signal integrity.
 			 */
-			mipi-max-frequency = <10000000>;
+			mipi-max-frequency = <25000000>;
 			invert-mode = "1-dot";
 			color-invert;
 			/*

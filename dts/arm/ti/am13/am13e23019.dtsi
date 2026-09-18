@@ -48,7 +48,7 @@
 	soc {
 		sram0_1_2: memory@20000000 {
 			compatible = "zephyr,memory-region";
-			reg = <0x20000000 DT_SIZE_K(96)>;
+			reg = <0x20000000 DT_SIZE_K(128)>;
 			zephyr,memory-region = "SRAM012";
 		};
 
@@ -58,11 +58,11 @@
 			zephyr,memory-region = "SRAM3CAHB";
 		};
 
-		sram3_sahb: memory@20018000 {
-			compatible = "zephyr,memory-region";
-			reg = <0x20018000 DT_SIZE_K(32)>;
-			zephyr,memory-region = "SRAM3SAHB";
-		};
+		// sram3_sahb: memory@20018000 {
+		// 	compatible = "zephyr,memory-region";
+		// 	reg = <0x20018000 DT_SIZE_K(32)>;
+		// 	zephyr,memory-region = "SRAM3SAHB";
+		// };
 
 		fri: syscon@40028000 {
 			compatible = "syscon";

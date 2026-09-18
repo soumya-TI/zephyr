@@ -34,6 +34,10 @@
 	spi-dev     = <&unicomm3_spi>;
 };
 
+&st7796s_display {
+	mipi-max-frequency = <25000000>;
+};
+
 / {
 	display_backlight: display-backlight {
 		compatible = "regulator-fixed";
@@ -93,7 +97,6 @@
 	};
 };
 
-&sram3_sahb {
-	compatible = "zephyr,memory-region", "mmio-sram";
-	zephyr,memory-region = "LVGL_BUF";
+&sram0_1_2 {
+	reg = <0x20000000 DT_SIZE_K(128)>;
 };
