@@ -27,6 +27,7 @@ include(${UI_DIR}/user_config.cmake)
 
 target_sources(app PRIVATE
     src/main.c
+    src/sensor_monitor.c
     ${LV_EDITOR_PROJECT_SOURCES}
 )
 

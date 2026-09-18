@@ -18,6 +18,7 @@
 
 #include "ti_thermostat.h"
 #include "ti_thermostat_gen.h"
+#include "sensor_monitor.h"
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
@@ -36,8 +37,12 @@ int main(void)
 	/* Build all screens, wire subjects and the simulator. Assets are compiled
 	 * in, so the asset-path argument is unused on this target. */
 	ti_thermostat_init("A:");
-	lv_screen_load(home);
 
+	/* Initialize sensor monitor AFTER ti_thermostat_init (subjects created) */
+	sensor_monitor_init();
+	
+	lv_screen_load(home);
+	
 	/* Render one frame, then enable the panel. */
 	lv_timer_handler();
 	ret = display_blanking_off(display_dev);

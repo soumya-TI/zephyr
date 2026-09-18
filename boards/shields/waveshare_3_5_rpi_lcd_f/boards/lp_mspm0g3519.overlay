@@ -12,6 +12,10 @@
 	spi-dev     = <&spi0>;
 };
 
+&st7796s_display {
+	mipi-max-frequency = <40000000>;
+};
+
 / {
 	display_backlight: display-backlight {
 		compatible = "regulator-fixed";
@@ -59,27 +63,39 @@
 	reg = <0x0 DT_SIZE_K(512)>;
 };
 
-/*
- * Unified 128 KB SRAM region — matches the MSPM0G3519 SDK canonical layout
- * (mspm0g3519.cmd: SRAM_BANK0 = 0x20200000/64KB, SRAM_BANK1 = 0x20210000/64KB,
- * comment: "SRAM on this device is continuous memory").
- *
- *   0x20200000–0x2020FFFF  64 KB  Bank A, no-ECC alias (no init required)
- *   0x20210000–0x2021FFFF  64 KB  Bank B               (no ECC)
- *   ─────────────────────────────────────────────────────────────────────
- *                         128 KB  = 0x20000 bytes total
- *
- * Kernel, stacks, BSS, LVGL VDB and pool all live here as ordinary static
- * arrays — no separate named region needed.  Estimated layout:
- *   kernel BSS + stacks  ~20 KB
- *   VDB  (12%)            36 KB
- *   pool  (60 KB)         60 KB
- *   ───────────────────  ──────
- *   total used           ~116 KB   (10 KB spare)
- *
- * Note: Bank B contents are lost in power modes stronger than SLEEP
- * (SDK linker comment).  Acceptable: the display is off in deep sleep.
- */
 &sram0 {
 	reg = <0x20200000 DT_SIZE_K(128)>;
+};
+
+/ {
+	aliases {
+		rtc = &rtc;
+	};
+};
+
+/* Enable RTC with LFXT */
+&lfxt {
+	status = "okay";
+};
+
+&rtc {
+	status = "okay";
+};
+
+/*
+ * HDC2080 on I2C2 - PC2/PC3 with on-board pull-ups
+ * PC2 = PINCM 76, function 2 (I2C2_SCL)
+ * PC3 = PINCM 77, function 2 (I2C2_SDA)
+ */
+&i2c2 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_scl_pc2 &i2c2_sda_pc3>;
+	pinctrl-names = "default";
+	clock-frequency = <1000000>;
+
+	ti_hdc2080@40 {
+		compatible = "ti,hdc2080";
+		reg = <0x40>;
+		int-gpios = <&gpiob 30 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	};
 };
