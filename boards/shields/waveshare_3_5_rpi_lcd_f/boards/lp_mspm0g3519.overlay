@@ -6,10 +6,22 @@
 
 #include <zephyr/dt-bindings/i2c/i2c.h>
 
+/*
+ * Waveshare 3.5" RPi LCD (F) on LP-MSPM0G3519.
+ *
+ * Display SPI (SPI1) uses PA17 (SCLK), PA18 (PICO), PA19 (POCI) — consistent
+ * SPI1 group 2.  CS is PA21 (separate from reset).  DC is PB21.
+ * Reset is PA16.
+ *
+ * Touch (GT911) on native I2C0: PA0=SDA / PA1=SCL with on-board 2.2k pull-ups.
+ *
+ * Sensor (HDC2080) on I2C2: PC2=SCL / PC3=SDA with on-board pull-ups.
+ */
+
 &waveshare_3_5_rpi_lcd_f_mipi_dbi {
-	dc-gpios    = <&gpiob 7 GPIO_ACTIVE_HIGH>;
-	reset-gpios = <&gpioa 9 GPIO_ACTIVE_LOW>;
-	spi-dev     = <&spi0>;
+	dc-gpios    = <&gpiob 1 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&gpiob 18 GPIO_ACTIVE_LOW>;
+	spi-dev     = <&spi1>;
 };
 
 &st7796s_display {
@@ -17,30 +29,29 @@
 };
 
 / {
-	display_backlight: display-backlight {
-		compatible = "regulator-fixed";
-		regulator-name = "display-backlight";
-		enable-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
-		regulator-boot-on;
-	};
+	// display_backlight: display-backlight {
+	// 	compatible = "regulator-fixed";
+	// 	regulator-name = "display-backlight";
+	// 	enable-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
+	// 	regulator-boot-on;
+	// };
 };
 
 &dma {
 	status = "okay";
 };
 
-&spi0 {
+&spi1 {
 	status = "okay";
 	/* DMA channel 0, SPI0 TX trigger = 13 (DMA_SPI0_TX_TRIG in mspm0g351x.h) */
-	dmas = <&dma 0 13>;
+	dmas = <&dma 0 15>;
 	dma-names = "tx";
 };
 
 /*
  * GT911 on native I2C0 (PA0=SDA / PA1=SCL). This bus has the board's populated
  * 2.2k pull-ups (jumpers J16/J17). PB2/PB3 (i2c1) has no pull-ups and PB3 is
- * tied to the S2 button by J23, so i2c0 is used instead. i2c0 driver support
- * comes from the cherry-picked PR #117311.
+ * tied to the S2 button by J23, so i2c0 is used instead.
  */
 &i2c0 {
 	status = "okay";
@@ -52,8 +63,8 @@
 		compatible = "goodix,gt911";
 		reg = <0x5d>;
 		alt-addr = <0x14>;
-		irq-gpios   = <&gpioa 13 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpiob 14 GPIO_ACTIVE_LOW>;
+		irq-gpios   = <&gpiob 28 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpiob 20 GPIO_ACTIVE_LOW>;
 		screen-width  = <320>;
 		screen-height = <480>;
 	};
@@ -96,6 +107,6 @@
 	ti_hdc2080@40 {
 		compatible = "ti,hdc2080";
 		reg = <0x40>;
-		int-gpios = <&gpiob 30 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		int-gpios = <&gpioa 27 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 	};
 };
