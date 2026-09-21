@@ -11,6 +11,7 @@
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/printk.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(mipi_dbi_spi, CONFIG_MIPI_DBI_LOG_LEVEL);
@@ -350,8 +351,17 @@ static int mipi_dbi_spi_command_write(const struct device *dev,
 				      uint8_t cmd, const uint8_t *data_buf,
 				      size_t len)
 {
-	return mipi_dbi_spi_write_helper(dev, dbi_config, true, cmd,
+	/* TIMING DEBUG: remove before merge */
+	int64_t cmd_start = k_uptime_get();
+	int ret;
+
+	ret = mipi_dbi_spi_write_helper(dev, dbi_config, true, cmd,
 					 data_buf, len);
+
+	// printk("[TIMING] spi cmd 0x%02x: %lld ms (%u data bytes)\n", cmd,
+	//        (long long)(k_uptime_get() - cmd_start), (unsigned int)len);
+
+	return ret;
 }
 
 static int mipi_dbi_spi_write_display(const struct device *dev,
@@ -377,8 +387,14 @@ static int mipi_dbi_spi_write_display(const struct device *dev,
 	}
 #endif
 
+	/* TIMING DEBUG: remove before merge */
+	int64_t xfer_start = k_uptime_get();
+
 	ret = mipi_dbi_spi_write_helper(dev, dbi_config, false, 0x0,
 					framebuf, desc->buf_size);
+
+	// printk("[TIMING] spi xfer: %lld ms (%u bytes)\n",
+	//        (long long)(k_uptime_get() - xfer_start), desc->buf_size);
 
 #if MIPI_DBI_SPI_TE_REQUIRED
 	/* End of frame reset */
@@ -559,7 +575,9 @@ static int mipi_dbi_spi_reset(const struct device *dev, k_timeout_t delay)
 		return ret;
 	}
 	k_sleep(delay);
-	return gpio_pin_set_dt(&config->reset, 0);
+	ret = gpio_pin_set_dt(&config->reset, 0);
+	// while(1);
+	return ret;
 }
 
 static int mipi_dbi_spi_release(const struct device *dev,
@@ -632,6 +650,7 @@ static int mipi_dbi_spi_configure_te(const struct device *dev,
 
 static int mipi_dbi_spi_init(const struct device *dev)
 {
+	printk("mipi_dbi_spi_init: %s\n", dev->name);
 	const struct mipi_dbi_spi_config *config = dev->config;
 	struct mipi_dbi_spi_data *data = dev->data;
 	int ret;
@@ -657,6 +676,7 @@ static int mipi_dbi_spi_init(const struct device *dev)
 			return -ENODEV;
 		}
 		ret = gpio_pin_configure_dt(&config->reset, GPIO_OUTPUT_INACTIVE);
+		printk("mipi_dbi_spi_init: reset pin configured, ret: %d\n", ret);
 		if (ret < 0) {
 			LOG_ERR("Could not configure reset GPIO (%d)", ret);
 			return ret;
@@ -664,6 +684,8 @@ static int mipi_dbi_spi_init(const struct device *dev)
 	}
 
 	k_mutex_init(&data->lock);
+
+	printk("MIPI DBI SPI driver initialized for %s\n", dev->name);
 
 	return 0;
 }

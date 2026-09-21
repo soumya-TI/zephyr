@@ -73,23 +73,23 @@ static inline void unicomm_delay_cycles(uint32_t cycles)
  */
 static int ti_unicomm_init(const struct device *dev)
 {
-	const struct ti_unicomm_config *cfg = dev->config;
-	const struct ti_unicomm_data *data = dev->data;
+        const struct ti_unicomm_config *cfg = dev->config;
+        const struct ti_unicomm_data *data = dev->data;
 
-	volatile UNICOMM_Regs_t *unicomm = (UNICOMM_Regs_t *)cfg->inst_base;
+        volatile UNICOMM_Regs_t *unicomm = (UNICOMM_Regs_t *)cfg->inst_base;
 
-	/*
-	 * Assert reset, enable power, wait for peripheral to come up, then
-	 * set IPMODE.
-	 */
-	unicomm->rstctl = RSTCTL_KEY_UNLOCK | RSTCTL_STICKY_BIT_CLEAR | RSTCTL_ASSERT_RESET;
-	unicomm->pwren = PWREN_KEY | PWREN_ENABLE;
-	unicomm_delay_cycles(CONFIG_MSPM0_PERIPH_STARTUP_DELAY);
-	if (!cfg->fixed_mode) {
-		unicomm->ipmode = data->ip_mode;
-	}
+        /* Reset and enable power; poll until PWREN.ENABLE reads back before
+         * accessing IPMODE (matches SDK DL_SPI_enablePower behaviour)
+         */
+        unicomm->rstctl = RSTCTL_KEY_UNLOCK | RSTCTL_STICKY_BIT_CLEAR | RSTCTL_ASSERT_RESET;
+        unicomm->pwren = PWREN_KEY | PWREN_ENABLE;
+        while ((unicomm->pwren & PWREN_ENABLE) == 0) {
+        }
+        if (!cfg->fixed_mode) {
+                unicomm->ipmode = data->ip_mode;
+        }
 
-	return 0;
+        return 0;
 }
 
 /*

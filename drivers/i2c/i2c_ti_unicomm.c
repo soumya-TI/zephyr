@@ -128,11 +128,36 @@ static inline void i2cc_send_frame(uint32_t base)
 		   UNICOMM_I2CC_CONTROL_FRAME_START_MASK);
 }
 
-static inline void i2cc_wait_not_busy(uint32_t base)
+/* Bus glitches / a NACKed byte can leave BUSY or RXFIFOEMPTY stuck forever
+ * with no HW abort indication reaching these bits, so every wait below is
+ * bounded instead of spinning indefinitely.
+ */
+#define I2C_TI_UNICOMM_TIMEOUT_MS 100
+
+static inline int i2cc_wait_not_busy(uint32_t base)
 {
+	int64_t deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
+
 	while (I2CC_IS_BUSY(base)) {
-		// k_sleep(K_CYC(20));
+		if (k_uptime_get() > deadline) {
+			return -ETIMEDOUT;
+		}
 	}
+
+	return 0;
+}
+
+static inline int i2cc_wait_rx_not_empty(uint32_t base)
+{
+	int64_t deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
+
+	while (I2CC_IS_RX_FIFO_EMPTY(base)) {
+		if (k_uptime_get() > deadline) {
+			return -ETIMEDOUT;
+		}
+	}
+
+	return 0;
 }
 
 static inline void i2cc_set_blen(uint32_t base, uint32_t len)
@@ -270,7 +295,7 @@ static int i2c_ti_unicomm_configure(const struct device *dev, uint32_t dev_confi
 	if (tpr == 0U) {
 		return -EINVAL;
 	}
-	tpr -= 1U;
+	tpr -= 1U;	
 
 	if (tpr < 1U || tpr > 127U) {
 		return -EINVAL;
@@ -322,6 +347,8 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 				i2cc_send_frame(cfg->unicomm_i2cc_base);
 
 				/* Polling Write */
+				int64_t deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
+
 				while (bytes_sent < msg.len) {
 					if (!I2CC_IS_TX_FIFO_FULL(cfg->unicomm_i2cc_base)) {
 						filled = i2cc_fill_tx_fifo(cfg->unicomm_i2cc_base,
@@ -330,13 +357,20 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 
 						buf_ptr += filled;
 						bytes_sent += filled;
+						deadline = k_uptime_get() + I2C_TI_UNICOMM_TIMEOUT_MS;
 					} else if (!I2CC_IS_BUSY(cfg->unicomm_i2cc_base)) {
 						/* HW aborted (e.g. NACK): FIFO not draining */
 						return -EIO;
+					} else if (k_uptime_get() > deadline) {
+						return -ETIMEDOUT;
 					}
 				}
 
-				i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+				int ret = i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+
+				if (ret < 0) {
+					return ret;
+				}
 			} else {
 				/* Non-advanced: one byte per FRM_START trigger.
 				 * START_ENABLE only on the first byte to generate START+address.
@@ -362,7 +396,11 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 
 					i2cc_send_frame(cfg->unicomm_i2cc_base);
 
-					i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+					int ret = i2cc_wait_not_busy(cfg->unicomm_i2cc_base);
+
+					if (ret < 0) {
+						return ret;
+					}
 				}
 
 				/* Send STOP condition */
@@ -392,8 +430,10 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 				/* Polling Read */
 				while (bytes_received < msg.len) {
 					/* Wait until a byte arrives or the transfer ends */
-					while (I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base)) {
-						// k_sleep(K_CYC(20));
+					int ret = i2cc_wait_rx_not_empty(cfg->unicomm_i2cc_base);
+
+					if (ret < 0) {
+						return ret;
 					}
 
 					while (!I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base) &&
@@ -430,8 +470,10 @@ static int i2c_ti_unicomm_transfer(const struct device *dev, struct i2c_msg *msg
 					 * the bus idles between bytes, causing while(!BUSY) to spin
 					 * forever if the pulse is missed.
 					 */
-					while (I2CC_IS_RX_FIFO_EMPTY(cfg->unicomm_i2cc_base)) {
-						// k_sleep(K_CYC(20));
+					int ret = i2cc_wait_rx_not_empty(cfg->unicomm_i2cc_base);
+
+					if (ret < 0) {
+						return ret;
 					}
 
 					msg.buf[b] = sys_read32(cfg->unicomm_i2cc_base +

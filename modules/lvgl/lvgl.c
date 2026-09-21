@@ -335,6 +335,7 @@ lv_result_t lv_mem_test_core(void)
 
 int lvgl_init(void)
 {
+	LOG_INF("LVGL init\n");
 	const struct device *display_dev[DT_ZEPHYR_DISPLAYS_COUNT];
 	struct lvgl_disp_data *p_disp_data;
 	int err;
@@ -416,7 +417,7 @@ int lvgl_init(void)
 
 	k_work_submit_to_queue(&lvgl_workqueue, &lvgl_work.work);
 #endif
-
+	printk("LVGL initialized\n");
 	return 0;
 }
 

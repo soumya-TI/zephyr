@@ -7,6 +7,7 @@
 
 #include <zephyr/kernel.h>
 #include <errno.h>
+#include <zephyr/sys/printk.h> /* TIMING DEBUG: remove before merge */
 
 #include "lvgl_display.h"
 
@@ -134,6 +135,16 @@ void lvgl_flush_display(struct lvgl_display_flush *request)
 {
 	struct lvgl_disp_data *data =
 		(struct lvgl_disp_data *)lv_display_get_user_data(request->display);
+
+	/* TIMING DEBUG: remove before merge */
+	static int64_t last_flush_end;
+	int64_t now = k_uptime_get();
+
+	// if (last_flush_end != 0) {
+	// 	printk("[TIMING] gap since last flush returned (render time): %lld ms\n",
+	// 	       (long long)(now - last_flush_end));
+	// }
+
 #ifdef CONFIG_LV_Z_FLUSH_THREAD
 	/*
 	 * LVGL will only start a flush once the previous one is complete,
@@ -149,4 +160,7 @@ void lvgl_flush_display(struct lvgl_display_flush *request)
 	display_write(data->display_dev, request->x, request->y, &request->desc, request->buf);
 	lv_display_flush_ready(request->display);
 #endif
+
+	/* TIMING DEBUG: remove before merge */
+	last_flush_end = k_uptime_get();
 }

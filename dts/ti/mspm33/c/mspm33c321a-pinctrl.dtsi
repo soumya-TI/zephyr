@@ -621,7 +621,6 @@
 		pinmux = <MSP_PINMUX(16, MSPM0_PIN_FUNCTION_6)>;
 		input-enable;
 		drive-open-drain;
-		bias-disable;
 	};
 
 	/* PB4 */
@@ -856,7 +855,6 @@
 		pinmux = <MSP_PINMUX(21, MSPM0_PIN_FUNCTION_6)>;
 		input-enable;
 		drive-open-drain;
-		bias-disable;
 	};
 
 	/omit-if-no-ref/ uc12_tx_pa10: uc12_tx_pa10 {

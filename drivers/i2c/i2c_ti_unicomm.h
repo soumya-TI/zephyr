@@ -32,7 +32,8 @@
 #define UNICOMM_I2CC_STATUS          0x00000108U
 #define UNICOMM_I2CC_FIFO_LEVEL      0x0000010CU
 #define UNICOMM_I2CC_TPR             0x00000110U
-/* SKIPPED - glitch filter control, bus monitor,  */
+/* SKIPPED - glitch filter control */
+#define UNICOMM_I2CC_BMON            0x0000011CU
 #define UNICOMM_I2CC_TXDATA          0x00000120U
 #define UNICOMM_I2CC_RXDATA          0x00000124U
 /* SKIPPED - PEC status */
@@ -123,6 +124,9 @@
 #define UNICOMM_I2CC_STATUS_ERR            0x00000002U /* NACK received */
 
 #define UNICOMM_I2CC_FIFO_LEVEL_TXCLR 0x00000008U /* flush TX FIFO */
+
+#define UNICOMM_I2CC_BMON_SDA_BIT 0x00000002U /* live SDA level: 0=low, 1=high */
+#define UNICOMM_I2CC_BMON_SCL_BIT 0x00000001U /* live SCL level: 0=low, 1=high */
 
 #define UNICOMM_I2CC_TARGET_ADDRESS_DIRECTION_MASK 0x00000001U
 #define UNICOMM_I2CC_TARGET_ADDRESS_ADDR_MASK      0x000007FEU

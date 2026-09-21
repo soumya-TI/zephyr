@@ -15,6 +15,7 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/sys/minmax.h>
 #include <zephyr/pm/pm.h>
+#include <zephyr/sys/printk.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(gt911, CONFIG_INPUT_LOG_LEVEL);
@@ -132,6 +133,8 @@ static int gt911_process(const struct device *dev)
 	/* obtain number of touch points */
 	reg_addr = GT911_REG_STATUS;
 	r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), &status, sizeof(status));
+	// printk("GT911 status readback=%d\n", status);
+	k_sleep(K_MSEC(5));
 	if (r < 0) {
 		return r;
 	}
@@ -154,6 +157,8 @@ static int gt911_process(const struct device *dev)
 						(uint8_t)(GT911_REG_STATUS >> 8), 0};
 
 	r = gt911_i2c_write(dev, clear_buffer, sizeof(clear_buffer));
+	// printk("GT911 status clear ret=%d\n", r);
+	k_sleep(K_MSEC(5));
 	if (r < 0) {
 		return r;
 	}
@@ -284,6 +289,7 @@ static void gt911_pm_state_exit(const struct device *dev, enum pm_state state)
 
 static int gt911_init(const struct device *dev)
 {
+	printk("GT911 init: %s\n", dev->name);
 	const struct gt911_config *config = dev->config;
 	struct gt911_data *data = dev->data;
 
@@ -376,7 +382,10 @@ static int gt911_init(const struct device *dev)
 		 * route the INT pin, or can only read it as an input (IE when
 		 * using a level shifter).
 		 */
+		//  volatile uint32_t loop = 0xdead;
+		//  while(loop == 0xdead);
 		r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), &reg_id, sizeof(reg_id));
+		printk("Return state 1: %d\n", r);
 		if (r < 0) {
 			/* Try alternate address */
 			data->actual_address = config->alt_addr;
@@ -388,6 +397,7 @@ static int gt911_init(const struct device *dev)
 		}
 	} else {
 		r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), &reg_id, sizeof(reg_id));
+		printk("Return state 2: %d\n", r);
 	}
 	if (r < 0) {
 		LOG_ERR("Device did not respond to I2C request");
@@ -413,6 +423,7 @@ static int gt911_init(const struct device *dev)
 	reg_addr = GT911_REG_CONFIG;
 	r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), gt911_config_firmware + 2,
 				 GT911_REG_CONFIG_SIZE);
+	printk("Return state 3: %d\n", r);
 	if (r < 0) {
 		return r;
 	}
@@ -428,6 +439,7 @@ static int gt911_init(const struct device *dev)
 	gt911_config_firmware[GT911_REG_CONFIG_SIZE + 1] = 1;
 
 	r = gt911_i2c_write(dev, gt911_config_firmware, sizeof(gt911_config_firmware));
+	printk("Return state 4: %d\n", r);
 	if (r < 0) {
 		return r;
 	}
@@ -449,6 +461,7 @@ static int gt911_init(const struct device *dev)
 	 */
 	pm_notifier_register(&data->pm_notifier_handle);
 #endif
+	printk("GT911 initialized on %s\n", dev->name);
 	return 0;
 }
 

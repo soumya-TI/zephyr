@@ -11,6 +11,7 @@
 #include <zephyr/pm/device.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/drivers/mipi_dbi.h>
+// #include <zephyr/sys/printk.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(display_st7796s, CONFIG_DISPLAY_LOG_LEVEL);
@@ -163,6 +164,7 @@ static int st7796s_write(const struct device *dev,
 	enum display_pixel_format pixfmt;
 
 	ret = st7796s_set_cursor(dev, x, y, desc->width, desc->height);
+	// printk("st7796s_write: set cursor ret=%d x: %d y: %d, desc->width: %d, desc->height: %d", ret, x, y, desc->width, desc->height);
 	if (ret < 0) {
 		return ret;
 	}
@@ -346,6 +348,7 @@ static int st7796s_pm_action(const struct device *dev, enum pm_device_action act
 	const struct st7796s_config *config = dev->config;
 	int ret;
 	uint8_t param;
+	printk("Getting called with action: %d\n", action);
 
 	switch (action) {
 	case PM_DEVICE_ACTION_TURN_ON:
@@ -435,6 +438,7 @@ static int st7796s_pm_action(const struct device *dev, enum pm_device_action act
 
 static int st7796s_init(const struct device *dev)
 {
+	printk("Init getting called?\n");
 	return pm_device_driver_init(dev, st7796s_pm_action);
 }
 
