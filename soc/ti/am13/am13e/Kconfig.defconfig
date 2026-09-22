@@ -18,4 +18,8 @@ config ARM_MPU
 config CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS
 	default y
 
+config HAS_AM13X_MCU_SDK
+	bool
+	default y
+
 endif # SOC_SERIES_AM13E

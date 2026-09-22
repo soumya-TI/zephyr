@@ -21,7 +21,7 @@
 #include "log.h"
 #include "hal.h"
 
-#include <zephyr/arch/arch_interface.h>
+// #include <zephyr/arch/arch_interface.h>
 #include <zephyr/kernel.h>
 #include <zephyr/irq.h>
 #include <zephyr/shell/shell.h>

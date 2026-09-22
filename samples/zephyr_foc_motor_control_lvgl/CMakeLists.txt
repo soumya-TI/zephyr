@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(zephyr_foc_motor_control_lvgl)
 
-set(SDK_PATH ../../../modules/hal/ti/am13/mcu_sdk)
+set(SDK_PATH ../../../modules/hal/ti/am13/ti)
 set(DEVICE am13e230x)
 
 if(BOARD_REVISION STREQUAL "e1")
@@ -110,6 +110,10 @@ target_include_directories(app PUBLIC
 
     ${SDK_PATH}/ti_sdk_config/${DEVICE}/default/device_support/include/
     ${SDK_PATH}/ti_sdk_config/${DEVICE}/default/utils_cfg/
+
+    ${SDK_PATH}/source/device/${DEVICE}/include/
+    ${SDK_PATH}/source/device/${DEVICE}/include/hw
+
     ${syscfg_gen_path}
 )
 
