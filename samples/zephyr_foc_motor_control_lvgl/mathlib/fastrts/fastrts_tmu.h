@@ -43,7 +43,7 @@
 #ifndef _FASTRTS_TMU_
 #define _FASTRTS_TMU_
 
-#include "arm_cde.h"
+#include <arm_cde.h>
 #include "arm_math_types.h"
 
 #ifdef __cplusplus
