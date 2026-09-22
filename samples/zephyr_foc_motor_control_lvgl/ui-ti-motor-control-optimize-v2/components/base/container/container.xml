@@ -1,0 +1,15 @@
+<component>
+  <!-- The root of every base component: remove_style_all strips the theme so
+       nothing arrives with a background, border or padding nobody asked for. -->
+  <styles>
+    <style name="style_base" width="content" height="content" />
+    <style name="style_scrollbar" bg_color="#const_border_strong" bg_opa="70%"
+           width="4" radius="2" />
+  </styles>
+  <view scrollable="false">
+    <remove_style_all />
+    <style name="style_base" />
+    <style name="style_scrollbar" selector="scrollbar" />
+    <style name="style_scrollbar" selector="scrollbar|scrolled" />
+  </view>
+</component>

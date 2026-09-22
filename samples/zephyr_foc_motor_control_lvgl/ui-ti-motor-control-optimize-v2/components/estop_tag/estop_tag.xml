@@ -1,0 +1,32 @@
+<component>
+  <!-- Emergency stop. HARDWARE SEAM: the board's physical button must write the
+       same subject_state, so both paths converge on one state.
+
+       Red permanently per ISO 13850, not as a fault tint. Drawn as a full pill
+       pushed left by half its height so the left cap clips flat at x=0; LVGL has
+       no per-corner radius, and pad_left carries the shift back. -->
+  <previews><preview width="200" height="60" style_bg_color="0x0E1113" /></previews>
+  <styles>
+    <style name="style_estop" bg_color="#const_danger" bg_opa="100%"
+           radius="#const_radius_pill" border_width="0"
+           shadow_width="0" shadow_opa="0" />
+    <style name="style_estop_pressed" bg_color="#const_danger_pressed" bg_opa="100%" />
+  </styles>
+  <view extends="row" width="content" height="28" gap="#const_space_8"
+        cross_align="center" pad_left="24" pad_right="14"
+        style_translate_x="-14">
+    <style name="style_estop" />
+    <style name="style_estop_pressed" selector="pressed" />
+
+    <subject_set_int_event subject="subject_state" value="#ref_state_stopped"
+                           trigger="clicked" />
+
+    <lv_image src="icon_estop" width="16" height="16" clickable="false">
+      <style name="style_icon_on_danger_solid" />
+    </lv_image>
+    <label text="E-STOP" clickable="false">
+      <style name="style_overline" />
+      <style name="style_ink_on_danger_solid" />
+    </label>
+  </view>
+</component>

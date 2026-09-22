@@ -1,0 +1,97 @@
+<screen>
+	<!-- Drive setup. Every control here writes its subject with no C behind it:
+	     bind_checked for the interlocks, subject_set_int_event for direction. -->
+	<view extends="lv_obj" width="#const_screen_w" height="#const_screen_h"
+		scrollable="false">
+		<style name="style_screen_base" />
+		<style name="style_canvas" />
+
+		<subject_set_int_event subject="subject_tab" value="3" trigger="screen_loaded" />
+
+		<column width="#const_screen_w" height="#const_screen_h" cross_align="center">
+
+			<header />
+
+			<column width="#const_content_w" height="content" gap="#const_space_12"
+				pad_top="#const_space_8">
+
+				<label text="Drive setup">
+					<style name="style_heading" />
+					<style name="style_ink" />
+				</label>
+
+				<!-- ══ Direction ════════════════════════════════════════════════════
+				     A segmented control, not a switch: "CW/CCW" has no natural off
+				     state. -->
+				<column width="100%" height="content" gap="#const_space_8">
+					<overline text="ROTATION" />
+					<row width="100%" main_align="space_between">
+						<lv_button width="138" height="48">
+							<style name="style_seg" />
+							<bind_style name="style_seg_selected" subject="subject_dir"
+								ref_value="#ref_dir_cw" />
+							<subject_set_int_event subject="subject_dir"
+								value="#ref_dir_cw" trigger="clicked" />
+							<row clickable="false" width="100%" height="100%" main_align="center"
+								cross_align="center" gap="#const_space_8">
+								<lv_image src="icon_dir_cw" width="16" height="16"
+									clickable="false">
+									<style name="style_icon_secondary" />
+									<bind_style name="style_icon_accent" subject="subject_dir"
+										ref_value="#ref_dir_cw" />
+								</lv_image>
+								<label text="Clockwise" clickable="false">
+									<style name="style_body_strong" />
+									<style name="style_ink_secondary" />
+									<bind_style name="style_ink_accent" subject="subject_dir"
+										ref_value="#ref_dir_cw" />
+								</label>
+							</row>
+						</lv_button>
+
+						<lv_button width="138" height="48">
+							<style name="style_seg" />
+							<bind_style name="style_seg_selected" subject="subject_dir"
+								ref_value="#ref_dir_ccw" />
+							<subject_set_int_event subject="subject_dir"
+								value="#ref_dir_ccw" trigger="clicked" />
+							<row clickable="false" width="100%" height="100%" main_align="center"
+								cross_align="center" gap="#const_space_8">
+								<lv_image src="icon_dir_ccw" width="16" height="16"
+									clickable="false">
+									<style name="style_icon_secondary" />
+									<bind_style name="style_icon_accent" subject="subject_dir"
+										ref_value="#ref_dir_ccw" />
+								</lv_image>
+								<label text="Counter" clickable="false">
+									<style name="style_body_strong" />
+									<style name="style_ink_secondary" />
+									<bind_style name="style_ink_accent" subject="subject_dir"
+										ref_value="#ref_dir_ccw" />
+								</label>
+							</row>
+						</lv_button>
+					</row>
+				</column>
+
+				<!-- ══ Interlocks ═══════════════════════════════════════════════════
+				     Three, not four: the fourth row pushed the tab bar off the glass,
+				     and the explanatory subtitles are what won that trade. -->
+				<card gap="#const_space_4" pad="12">
+					<overline text="MOTOR INTERLOCKS" />
+
+					<check_row text="Soft start" value="subject_cfg_softstart"
+						meta="Ramp to reference instead of stepping" />
+					<check_row text="Allow reversal" value="subject_cfg_reverse"
+						meta="Permit direction change while running" />
+					<check_row text="Thermal derate" value="subject_cfg_derate"
+						meta="Fold back current above 80 &#176;C" />
+				</card>
+			</column>
+
+			<container name="grow" width="#const_screen_w" flex_grow="1" />
+
+			<tab_bar />
+		</column>
+	</view>
+</screen>

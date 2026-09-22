@@ -1,0 +1,78 @@
+<!-- This file is AUTO GENERATED, DO NOT EDIT manually -->
+<projectSpec>
+  <project
+        name="gpio_output_toggle_am13e2x_som_m33_nortos_ti_arm_clang"
+        device="AM13E23"
+        deviceCore="CORTEX_M33"
+        cgtVersion="4.0.3.LTS"
+        toolChain="TICLANG"
+        products="sysconfig:1.26.0;ti-mcu-sdk"
+        connection="TIXDS110_Connection.xml"
+        endianness="little"
+        outputFormat="ELF"
+        outputType="executable"
+        enableSysConfigTool="true"
+        compilerBuildOptions="
+            -mcpu=cortex-m33
+            -march=armv8.1-m.main+cdecp0
+            -mthumb
+            -mfpu=fpv5-sp-d16
+            -mfloat-abi=hard
+            -g
+            -Wall
+            -Wextra
+            -Werror
+            -Wno-gnu-variable-sized-type-not-at-end
+            -Wno-unused-function
+            -Wno-unused-command-line-argument
+            -Wno-unused-parameter
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/compiler/m33_ti_arm_clang
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/include/hw
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/ti_sdk_config/default/device_support/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/arch/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/arch/m33/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/ti_sdk_config/default/arch_cfg
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/cmsis/Core/Include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/driverlib/am13e2x
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/utils/log/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/ti_sdk_config/default/utils_cfg
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/examples/driverlib/gpio/gpio_toggle_output/am13e2x_som/m33_nortos
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/examples/driverlib/gpio/gpio_toggle_output/am13e2x_som
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/examples/driverlib/gpio/gpio_toggle_output/
+        "
+        linkerBuildOptions="
+            -Wl,--diag_suppress=10063
+            -Wl,--ram_model
+            -Wl,--reread_libs
+            -i${COM_TI_AM13E2X_SDK_INSTALL_DIR}/build/am13e2x/lib/${ConfigName}
+            -llibti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibarch_ti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibdriverlib_ti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibutils_nortos_ti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibam13e2x_m33_ti_arm_clang.a
+        "
+        >
+    <configuration name="Debug"
+        compilerBuildOptions="
+            -D_DEBUG
+        "
+        linkerBuildOptions="
+        "
+    />
+    <configuration name="Release"
+        compilerBuildOptions="
+            -Os
+        "
+        linkerBuildOptions="
+        "
+    />
+    <file action="copy"
+        path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/ti_sdk_config/default/linker_m33_ti_arm_clang.cmd"
+        targetDirectory=""
+    />
+    <file action="copy" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/examples/driverlib/gpio/gpio_toggle_output/main.c" targetDirectory="."/>
+    <file path="../example.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
+    </file>
+  </project>
+</projectSpec>

@@ -1,0 +1,45 @@
+<component>
+  <!-- Live telemetry: value, unit, caption. The caption replaces what used to be
+       a Lucide glyph - it costs no flash (the overline font is already resident
+       for every other caption on the screen) where each icon cost ~1 kB of
+       image data plus an lv_image widget and a recolour at every draw. It also
+       says what the glyph could only imply: "zap" is not the word "current". -->
+  <previews><preview width="288" height="60" style_bg_color="0x0E1113" /></previews>
+  <api>
+    <prop name="caption" type="string" default="CURRENT" />
+    <prop name="value" type="subject" />
+    <prop name="fmt" type="string" default="%s" />
+    <prop name="placeholder" type="string" default="0.0" />
+    <prop name="unit" type="string" default="A" />
+    <prop name="col_w" type="int" default="90" />
+    <!-- Step the value down where a column is narrow or the text is long. -->
+    <prop name="value_style" type="style" default="style_stat_lg" />
+    <prop name="value_tone" type="style" default="style_ink" />
+  </api>
+  <!-- cross_align="center" is load-bearing: callers give equal-width columns, so
+       a value growing from "0.0" to "12.5" expands about its own centre instead
+       of shoving the readouts beside it. -->
+  <view extends="column" width="$col_w" height="content" gap="#const_space_2"
+        cross_align="center">
+
+    <row height="content" gap="#const_space_4" cross_align="end">
+      <label bind_text="$value" bind_text-fmt="$fmt" text="$placeholder">
+        <style name="$value_style" />
+        <style name="style_ink" />
+        <style name="$value_tone" />
+      </label>
+
+      <label text="$unit" style_pad_bottom="3">
+        <style name="style_meta" />
+        <style name="style_ink_tertiary" />
+      </label>
+    </row>
+
+    <!-- Caption UNDER the value, not over it: the number is what the operator
+         scans for, and a caption above makes the eye read a word first. -->
+    <label text="$caption">
+      <style name="style_overline" />
+      <style name="style_ink_overline" />
+    </label>
+  </view>
+</component>

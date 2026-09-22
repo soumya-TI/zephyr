@@ -1,0 +1,16 @@
+<component>
+  <!-- The system surface: fill + hairline + lg radius, no shadow. clip_corner
+       stops nested fills squaring off the rounded corners. -->
+  <api>
+    <prop name="pad" type="int" default="16" />
+    <prop name="gap" type="int" default="12" />
+  </api>
+  <styles>
+    <style name="style_clip" clip_corner="true" layout="flex" flex_flow="column" />
+  </styles>
+  <view extends="panel" width="#const_content_w" height="content"
+        style_pad_all="$pad" style_pad_row="$gap">
+    <style name="style_card" />
+    <style name="style_clip" />
+  </view>
+</component>

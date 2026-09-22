@@ -1,0 +1,29 @@
+<component>
+  <!-- One half of the bottom bar. `index` is compared against subject_tab by
+       bind_style, so the item lights itself and tab_bar stays propless. -->
+  <previews><preview width="96" height="76" style_bg_color="0x0E1113" /></previews>
+  <api>
+    <prop name="icon" type="image" default="icon_tab_run" />
+    <prop name="text" type="string" default="Operate" />
+    <prop name="index" type="int" default="0" />
+    <!-- Raises the danger tone when the named subject reads 1. Defaults to a
+         permanently-0 subject, so only Faults ever lights up. -->
+    <prop name="alert" type="subject" default="subject_alert_never" />
+  </api>
+  <view extends="column" width="#const_nav_primary_w" height="#const_tabbar_h"
+        main_align="center" cross_align="center" gap="#const_space_4">
+
+    <lv_image src="$icon" width="26" height="26" clickable="false">
+      <style name="style_icon_tertiary" />
+      <bind_style name="style_icon_accent" subject="subject_tab" ref_value="$index" />
+      <bind_style name="style_icon_danger" subject="$alert" ref_value="1" />
+    </lv_image>
+
+    <label text="$text" clickable="false">
+      <style name="style_chip" />
+      <style name="style_ink_tertiary" />
+      <bind_style name="style_ink_accent" subject="subject_tab" ref_value="$index" />
+      <bind_style name="style_ink_danger" subject="$alert" ref_value="1" />
+    </label>
+  </view>
+</component>

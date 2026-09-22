@@ -1,0 +1,32 @@
+<component>
+  <!-- On every screen. Left: the LVGL x TI lockup and a status LED. Right:
+       Trend and Setup as bare icons - the bottom bar holds the two screens you
+       work in, the header the two you visit. -->
+  <previews><preview width="320" height="64" style_bg_color="0x0E1113" /></previews>
+  <view extends="row" width="#const_screen_w" height="#const_header_h"
+        pad_left="#const_gutter" pad_right="#const_space_8"
+        cross_align="center" gap="#const_space_12">
+
+    <lv_image name="logostrip" src="image_logostrip" width="75" height="20"
+              clickable="false" />
+
+    <container name="status_led" width="10" height="10"
+               style_radius="#const_radius_pill">
+      <style name="style_dot_neutral" />
+      <bind_style name="style_dot_accent" subject="subject_state"
+                  ref_value="#ref_state_running" />
+      <bind_style name="style_dot_danger" subject="subject_state"
+                  ref_value="#ref_state_fault" />
+    </container>
+
+    <container name="spacer" flex_grow="1" height="1" />
+
+    <header_action icon="icon_tab_trend" index="2">
+      <screen_create_event screen="trend" trigger="clicked" />
+    </header_action>
+
+    <header_action icon="icon_tab_config" index="3">
+      <screen_create_event screen="config" trigger="clicked" />
+    </header_action>
+  </view>
+</component>

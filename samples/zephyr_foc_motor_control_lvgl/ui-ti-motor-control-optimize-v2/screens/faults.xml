@@ -1,0 +1,144 @@
+<screen>
+	<!-- Clear motor faults. The log is an lv_table, whose `items` part styles every
+	     cell identically, so severity is a text column rather than a red row fill. -->
+	<view extends="lv_obj" width="#const_screen_w" height="#const_screen_h"
+		scrollable="false">
+		<style name="style_screen_base" />
+		<style name="style_canvas" />
+
+		<subject_set_int_event subject="subject_tab" value="1" trigger="screen_loaded" />
+
+		<column width="#const_screen_w" height="#const_screen_h" cross_align="center">
+
+			<header />
+
+			<column width="#const_content_w" height="content" gap="#const_space_12"
+				pad_top="#const_space_8">
+
+				<row width="100%" main_align="space_between" cross_align="center">
+					<label text="Fault log">
+						<style name="style_heading" />
+						<style name="style_ink" />
+					</label>
+
+					<!-- Two chips in one slot, gated on whether anything is latched. -->
+					<chip text="All clear" tone="style_chip_accent"
+						tone_dot="style_dot_accent" tone_label="style_ink_accent">
+						<bind_flag_if_gt flag="hidden" subject="subject_fault_count"
+							ref_value="0" />
+					</chip>
+					<chip text="Latched" tone="style_chip_danger"
+						tone_dot="style_dot_danger" tone_label="style_ink_danger">
+						<bind_flag_if_le flag="hidden" subject="subject_fault_count"
+							ref_value="0" />
+					</chip>
+				</row>
+
+				<!-- Gated with the Clear button: at count=0 the screen otherwise showed a
+				     populated table above a card reading "No faults latched". -->
+				<card gap="#const_space_8">
+					<bind_flag_if_le flag="hidden" subject="subject_fault_count"
+						ref_value="0" />
+					<overline text="LATCHED FAULTS" />
+
+					<lv_table name="fault_table" width="100%" height="content"
+						column_count="3" row_count="5">
+						<style name="style_table" />
+						<style name="style_table_cell" selector="items" />
+						<style name="style_scrollbar_hidden" selector="scrollbar" />
+
+						<lv_table-column column="0" width="52px" />
+						<lv_table-column column="1" width="132px" />
+						<lv_table-column column="2" width="72px" />
+
+						<lv_table-cell row="0" column="0" value="CODE" />
+						<lv_table-cell row="0" column="1" value="DESCRIPTION" />
+						<lv_table-cell row="0" column="2" value="SEVERITY" />
+
+						<lv_table-cell row="1" column="0" value="F102" />
+						<lv_table-cell row="1" column="1" value="Overcurrent trip" />
+						<lv_table-cell row="1" column="2" value="Critical" />
+
+						<lv_table-cell row="2" column="0" value="F210" />
+						<lv_table-cell row="2" column="1" value="Stage over-temp" />
+						<lv_table-cell row="2" column="2" value="Warning" />
+
+						<lv_table-cell row="3" column="0" value="F045" />
+						<lv_table-cell row="3" column="1" value="Hall sequence" />
+						<lv_table-cell row="3" column="2" value="Critical" />
+
+						<lv_table-cell row="4" column="0" value="F311" />
+						<lv_table-cell row="4" column="1" value="DC bus sag" />
+						<lv_table-cell row="4" column="2" value="Warning" />
+					</lv_table>
+				</card>
+
+				<!-- Empty state, stacked against the table rather than replacing it, so
+				     "cleared" is visibly the same screen. -->
+				<card gap="#const_space_4" pad="20">
+					<bind_flag_if_gt flag="hidden" subject="subject_fault_count"
+						ref_value="0" />
+					<label text="No faults latched">
+						<style name="style_subtitle" />
+						<style name="style_ink" />
+					</label>
+					<label text="The drive is free to start.">
+						<style name="style_meta" />
+						<style name="style_ink_tertiary" />
+					</label>
+				</card>
+
+				<!-- ══ Drive health ═════════════════════════════════════════════════
+				     Gated: a screen reporting a latched fault should be about the
+				     fault, not about nominal readings sitting next to it. -->
+				<card gap="#const_space_12">
+					<bind_flag_if_gt flag="hidden" subject="subject_fault_count"
+						ref_value="0" />
+					<overline text="DRIVE HEALTH" />
+					<row width="100%" main_align="space_between">
+						<stat caption="BUS" value="subject_bus_str" value_style="style_stat_md"
+							fmt="%s" placeholder="24.0" unit="V" col_w="85" />
+						<stat caption="TEMP" value="subject_temp" value_style="style_stat_md"
+							fmt="%d" placeholder="31" unit="&#176;C" col_w="85" />
+						<stat caption="RUNTIME" value="subject_runtime_str" value_style="style_stat_md"
+							fmt="%s" placeholder="00:00" unit="" col_w="85" />
+					</row>
+				</card>
+
+				<!-- Three declarative writes on one press: empty the log, drop the flag,
+				     return the drive to Stopped. Ghost rather than red - clearing a
+				     fault is recovery, and danger fills are for stopping a machine. -->
+				<lv_button width="100%" height="#const_touch_lg">
+					<style name="style_btn_base" />
+					<style name="style_btn_ghost" />
+					<style name="style_btn_ghost_pressed" selector="pressed" />
+					<bind_flag_if_le flag="hidden" subject="subject_fault_count"
+						ref_value="0" />
+
+					<subject_set_int_event subject="subject_fault_count" value="0"
+						trigger="clicked" />
+					<subject_set_int_event subject="subject_fault_active" value="#ref_off"
+						trigger="clicked" />
+					<subject_set_int_event subject="subject_state"
+						value="#ref_state_stopped" trigger="clicked" />
+
+					<row clickable="false" width="100%" height="100%" main_align="center"
+						cross_align="center" gap="#const_space_8">
+						<lv_image src="icon_clear" width="16" height="16"
+							clickable="false">
+							<style name="style_icon_ink" />
+						</lv_image>
+						<label text="Clear motor faults" clickable="false">
+							<style name="style_title" />
+							<style name="style_ink" />
+						</label>
+					</row>
+				</lv_button>
+			</column>
+
+			<container name="grow" width="#const_screen_w" flex_grow="1" />
+
+			<tab_bar />
+		</column>
+	</view>
+</screen>

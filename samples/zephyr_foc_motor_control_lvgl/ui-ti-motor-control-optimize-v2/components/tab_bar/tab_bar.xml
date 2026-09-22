@@ -1,0 +1,25 @@
+<component>
+  <!-- Two destinations, half the width each. Trend and Setup moved to the header
+       rather than claiming an equal slot here. -->
+  <previews><preview width="320" height="86" style_bg_color="0x0E1113" /></previews>
+  <styles>
+    <style name="style_bar_top" bg_color="#const_canvas" bg_opa="100%"
+           border_color="#const_border" border_width="1" border_side="top"
+           radius="0" />
+  </styles>
+  <view extends="row" width="#const_screen_w" height="#const_tabbar_h"
+        main_align="space_between" cross_align="center">
+    <style name="style_bar_top" />
+
+    <tab_item icon="icon_tab_run" text="Operate" index="0">
+      <screen_create_event screen="run" trigger="clicked" />
+    </tab_item>
+
+    <!-- The danger binding is declared AFTER the active binding, so a latched
+         fault wins when both apply. -->
+    <tab_item icon="icon_tab_faults" text="Faults" index="1"
+              alert="subject_fault_active">
+      <screen_create_event screen="faults" trigger="clicked" />
+    </tab_item>
+  </view>
+</component>

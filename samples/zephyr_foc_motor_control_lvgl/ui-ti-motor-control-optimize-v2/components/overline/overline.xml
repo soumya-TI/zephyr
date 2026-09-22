@@ -1,0 +1,12 @@
+<component>
+  <!-- The section marker, always the first line of a card section. It replaces
+       headers and rules - do not add a divider under one. -->
+  <previews><preview width="288" height="40" style_bg_color="0x191E23" /></previews>
+  <api>
+    <prop name="text" type="string" default="SECTION" />
+  </api>
+  <view extends="label" text="$text">
+    <style name="style_overline" />
+    <style name="style_ink_overline" />
+  </view>
+</component>

@@ -1,0 +1,10 @@
+<component>
+  <!-- An opaque container: takes whatever fill the caller gives it, unlike
+       `card`, which is the design language's one specific surface. -->
+  <styles>
+    <style name="style_filled" bg_opa="100%" />
+  </styles>
+  <view extends="container">
+    <style name="style_filled" />
+  </view>
+</component>

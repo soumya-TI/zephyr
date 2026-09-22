@@ -1,0 +1,25 @@
+<component>
+  <!-- Measured shaft speed. One label, not four lv_roller wheels: the rollers
+       cost four widgets, four observers and four digit subjects to render a
+       number the label binds directly. %04d keeps the four-digit width so the
+       readout does not jog when the speed crosses 1000. -->
+  <previews><preview width="320" height="140" style_bg_color="0x191E23" /></previews>
+  <view extends="row" width="content" height="content" gap="0" cross_align="end"
+        clickable="false">
+
+    <label bind_text="subject_rpm_act" bind_text-fmt="%04d" text="0000"
+           clickable="false">
+      <style name="style_hero" />
+      <!-- Digit tone by state: dim when stopped, full ink running, red on fault. -->
+      <bind_style name="style_hero_dim" subject="subject_state"
+                  ref_value="#ref_state_stopped" />
+      <bind_style name="style_hero_fault" subject="subject_state"
+                  ref_value="#ref_state_fault" />
+    </label>
+
+    <label text="RPM" style_pad_left="8" style_pad_bottom="12" clickable="false">
+      <style name="style_hero_unit" />
+      <style name="style_ink_tertiary" />
+    </label>
+  </view>
+</component>

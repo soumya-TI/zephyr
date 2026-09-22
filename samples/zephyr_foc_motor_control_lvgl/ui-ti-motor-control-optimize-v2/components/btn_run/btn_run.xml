@@ -1,0 +1,48 @@
+<component>
+	<!-- Motor start / stop. Three buttons in one slot, not one that changes
+       meaning: flex gives a hidden child zero space, so exactly one is laid out
+       and each carries its own unconditional write. -->
+	<previews>
+		<preview width="320" height="90" style_bg_color="0x0E1113" />
+	</previews>
+	<view extends="column" width="#const_content_w" height="content">
+		<!-- Stopped -> Start -->
+		<lv_button width="100%" height="#const_touch_lg">
+			<style name="style_btn_base" />
+			<style name="style_btn_accent" />
+			<style name="style_btn_accent_pressed" selector="pressed" />
+			<bind_flag_if_not_eq flag="hidden" subject="subject_state" ref_value="#ref_state_stopped" />
+			<subject_set_int_event subject="subject_state" value="#ref_state_running" trigger="clicked" />
+			<label text="Start Motor" align="center" clickable="false">
+				<style name="style_title" />
+				<style name="style_ink_on_accent" />
+			</label>
+		</lv_button>
+
+		<!-- Running -> Stop -->
+		<lv_button width="100%" height="#const_touch_lg">
+			<style name="style_btn_base" />
+			<style name="style_btn_danger" />
+			<style name="style_btn_danger_pressed" selector="pressed" />
+			<bind_flag_if_not_eq flag="hidden" subject="subject_state" ref_value="#ref_state_running" />
+			<subject_set_int_event subject="subject_state" value="#ref_state_stopped" trigger="clicked" />
+			<label text="Stop Motor" align="center" clickable="false">
+				<style name="style_title" />
+				<style name="style_ink" />
+			</label>
+		</lv_button>
+
+		<!-- Faulted -> inert. The actual clear lives on the faults screen. -->
+		<!-- Held inert via style_btn_disabled, not <remove_style_all/>: that child is
+         processed after width/height and wipes them. See style_btn_flat. -->
+		<lv_button width="100%" height="#const_touch_lg" clickable="false">
+			<style name="style_btn_base" />
+			<style name="style_btn_disabled" />
+			<bind_flag_if_not_eq flag="hidden" subject="subject_state" ref_value="#ref_state_fault" />
+			<label text="Clear faults to start" align="center" clickable="false">
+				<style name="style_title" />
+				<style name="style_ink_tertiary" />
+			</label>
+		</lv_button>
+	</view>
+</component>

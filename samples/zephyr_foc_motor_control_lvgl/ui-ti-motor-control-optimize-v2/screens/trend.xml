@@ -1,0 +1,93 @@
+<screen>
+	<!-- Speed over time. The odometer answers "what is the speed now"; this answers
+	     "what has it been doing", which is the question that diagnoses a drive. -->
+	<view extends="lv_obj" width="#const_screen_w" height="#const_screen_h"
+		scrollable="false">
+		<style name="style_screen_base" />
+		<style name="style_canvas" />
+
+		<subject_set_int_event subject="subject_tab" value="2" trigger="screen_loaded" />
+
+		<column width="#const_screen_w" height="#const_screen_h" cross_align="center">
+
+			<header />
+
+			<column width="#const_content_w" height="content" gap="#const_space_12"
+				pad_top="#const_space_8">
+
+				<label text="Speed trend">
+					<style name="style_heading" />
+					<style name="style_ink" />
+				</label>
+
+				<!-- ══ The chart ════════════════════════════════════════════════════
+				     Values are STATIC: motor_sim.c writes subjects, and a chart series is
+				     not a subject, so making this live needs C holding the widget. Two
+				     axes because the series share no unit - load on the speed axis would
+				     flatten into the baseline. -->
+				<card gap="#const_space_12">
+					<row width="100%" main_align="space_between" cross_align="center">
+						<overline text="LAST 30 SECONDS" />
+						<row gap="#const_space_12" cross_align="center">
+							<row gap="#const_space_4" cross_align="center">
+								<container width="8" height="2"
+									style_radius="#const_radius_pill">
+									<style name="style_bar_accent" />
+								</container>
+								<label text="RPM">
+									<style name="style_badge" />
+									<style name="style_ink_secondary" />
+								</label>
+							</row>
+							<row gap="#const_space_4" cross_align="center">
+								<container width="8" height="2"
+									style_radius="#const_radius_pill">
+									<style name="style_bar_warn" />
+								</container>
+								<label text="LOAD">
+									<style name="style_badge" />
+									<style name="style_ink_secondary" />
+								</label>
+							</row>
+						</row>
+					</row>
+
+					<!-- values= is WHITESPACE separated. The schema's own example shows
+					     "10, 20, 10", but the parser rejects the trailing commas. -->
+					<lv_chart name="trend_chart" width="100%" height="116" type="line"
+						point_count="30" update_mode="shift"
+						hor_div_line_count="5" ver_div_line_count="7">
+						<style name="style_chart" />
+						<style name="style_chart_items" selector="items" />
+						<style name="style_chart_items" selector="indicator" />
+
+						<lv_chart-axis axis="primary_y" min_value="0" max_value="3600" />
+						<lv_chart-axis axis="secondary_y" min_value="0" max_value="100" />
+
+						<lv_chart-series color="#const_accent" axis="primary_y"
+							values="0 0 120 340 600 880 1120 1200 1195 1205 1200 1198 1202 1200 1190 1210 1200 1160 1080 1140 1200 1205 1198 1200 1202 1199 1201 1200 1198 1200" />
+						<lv_chart-series color="#const_warn" axis="secondary_y"
+							values="0 0 18 42 58 64 55 38 36 37 36 35 37 36 40 38 36 52 61 48 38 36 37 36 36 37 36 36 37 36" />
+					</lv_chart>
+
+				</card>
+
+				<!-- Inset tiles, not raised cards: these are derived from the chart above
+				     rather than being new information. -->
+				<column width="100%" height="content" gap="#const_space_8">
+					<overline text="THIS RUN" />
+					<row width="100%" main_align="space_between">
+						<stat_tile caption="PEAK" value="subject_peak_rpm" fmt="%d"
+							placeholder="1210" unit="RPM" col_w="140" />
+						<stat_tile caption="MEAN LOAD" value="subject_avg_load" fmt="%d"
+							placeholder="38" unit="%" col_w="140" />
+					</row>
+				</column>
+			</column>
+
+			<container name="grow" width="#const_screen_w" flex_grow="1" />
+
+			<tab_bar />
+		</column>
+	</view>
+</screen>

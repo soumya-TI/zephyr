@@ -1,0 +1,21 @@
+<component>
+  <!-- A demoted destination: icon only, visibly secondary to the bottom tabs.
+       Lights off subject_tab exactly as a tab does. -->
+  <previews><preview width="120" height="60" style_bg_color="0x0E1113" /></previews>
+  <api>
+    <prop name="icon" type="image" default="icon_tab_config" />
+    <prop name="index" type="int" default="3" />
+  </api>
+  <view extends="lv_button" width="#const_header_action" height="#const_header_action">
+    <!-- style_btn_flat, NOT <remove_style_all/>: that child is processed after
+         width/height and wipes them, collapsing the button to zero. -->
+    <style name="style_btn_flat" />
+    <style name="style_btn_ghost_pressed" selector="pressed" />
+    <row clickable="false" width="100%" height="100%" main_align="center" cross_align="center">
+      <lv_image src="$icon" width="21" height="21" clickable="false">
+        <style name="style_icon_tertiary" />
+        <bind_style name="style_icon_accent" subject="subject_tab" ref_value="$index" />
+      </lv_image>
+    </row>
+  </view>
+</component>

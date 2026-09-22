@@ -1,0 +1,49 @@
+<test width="320" height="480">
+	<!-- Covers the remaining interactive surfaces. Coordinates are measured off
+	     rendered screenshots, so a layout change fails the assertion after the
+	     click and names the control it moved. -->
+	<view extends="run" />
+
+	<steps>
+		<subject_compare subject="subject_tab" value="0" />
+
+		<!-- ══ Header action -> Setup ═══════════════════════════════════════════ -->
+		<click_at x="292" y="28" />
+		<wait ms="200" />
+		<subject_compare subject="subject_tab" value="3" />
+
+		<!-- ══ bind_checked is two-way ══════════════════════════════════════════
+		     Nothing writes subject_cfg_reverse from XML. If this flips, the
+		     VALUE_CHANGED write-back is real. -->
+		<subject_compare subject="subject_cfg_reverse" value="0" />
+		<click_at x="150" y="290" />
+		<wait ms="150" />
+		<subject_compare subject="subject_cfg_reverse" value="1" />
+
+		<!-- ══ Rotation segments ════════════════════════════════════════════════ -->
+		<click_at x="235" y="149" />
+		<wait ms="150" />
+		<subject_compare subject="subject_dir" value="1" />
+		<click_at x="85" y="149" />
+		<wait ms="150" />
+		<subject_compare subject="subject_dir" value="0" />
+
+		<!-- ══ Bottom bar -> Faults ═════════════════════════════════════════════ -->
+		<click_at x="240" y="442" />
+		<wait ms="200" />
+		<subject_compare subject="subject_tab" value="1" />
+
+		<!-- ══ Clear motor faults ═══════════════════════════════════════════════
+		     Latch a fault so the gated table and Clear button appear, then clear. -->
+		<subject_set subject="subject_fault_count" value="2" />
+		<subject_set subject="subject_fault_active" value="1" />
+		<subject_set subject="subject_state" value="2" />
+		<wait ms="200" />
+
+		<click_at x="160" y="361" />
+		<wait ms="200" />
+		<subject_compare subject="subject_fault_count" value="0" />
+		<subject_compare subject="subject_fault_active" value="0" />
+		<subject_compare subject="subject_state" value="0" />
+	</steps>
+</test>

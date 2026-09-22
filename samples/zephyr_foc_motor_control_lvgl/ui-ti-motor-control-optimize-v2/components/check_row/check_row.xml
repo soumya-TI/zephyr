@@ -1,0 +1,22 @@
+<component>
+  <!-- An interlock. bind_checked is the one genuinely two-way bind_* - it also
+       installs a VALUE_CHANGED write-back - so a tick needs no event and no C. -->
+  <previews><preview width="288" height="72" style_bg_color="0x191E23" /></previews>
+  <api>
+    <prop name="text" type="string" default="Interlock" />
+    <prop name="meta" type="string" default="" />
+    <prop name="value" type="subject" />
+  </api>
+  <view extends="column" width="100%" height="content" gap="#const_space_2">
+    <lv_checkbox text="$text" bind_checked="$value"
+                 style_pad_top="8" style_pad_bottom="2" width="100%">
+      <style name="style_checkbox" />
+      <style name="style_checkbox_ind" selector="indicator" />
+      <style name="style_checkbox_ind_checked" selector="indicator|checked" />
+    </lv_checkbox>
+    <label text="$meta" style_pad_left="36" style_pad_bottom="8">
+      <style name="style_meta" />
+      <style name="style_ink_tertiary" />
+    </label>
+  </view>
+</component>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectSpec>
+  <project
+        name="1Shunt_Sensorless_FOC_DRV8329_am13e2x_som_m33_nortos_ti_arm_clang"
+        device="AM13E23"
+        deviceCore="CORTEX_M33"
+        cgtVersion="4.0.3.LTS"
+        toolChain="TICLANG"
+        products="sysconfig:1.26.0;ti-mcu-sdk"
+        connection="TIXDS110_Connection.xml"
+        endianness="little"
+        outputFormat="ELF"
+        outputType="executable"
+        enableSysConfigTool="true"
+        compilerBuildOptions="
+            -mcpu=cortex-m33
+            -march=armv8.1-m.main+cdecp0
+            -mthumb
+            -mfpu=fpv5-sp-d16
+            -mfloat-abi=hard
+            -O3
+            -g
+            -Wall
+            -Wextra
+            -Wno-gnu-variable-sized-type-not-at-end
+            -Wno-unused-function
+            -Wno-unused-command-line-argument
+            -Wno-unused-parameter
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/compiler/m33_ti_arm_clang
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/device/am13e2x/include/hw
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/ti_sdk_config/am13e2x/default/device_support/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/arch/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/arch/m33/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/ti_sdk_config/am13e2x/default/arch_cfg
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/cmsis/Core/Include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/cmsis/DSP/Include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/driverlib/am13e2x
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/utils/log/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/ti_sdk_config/am13e2x/default/utils_cfg
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/pi/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/pr/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/ipd/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/dead_time_comp/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/fwc/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/mtpa/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/vs_freq/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/vsf/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/dclink_ss/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/filter/filter_fo/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/esmo/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/speedfr/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/clarke/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/ipark/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/park/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/svgen/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/volts/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/angle_gen/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/cpu_time/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/datalog/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/traj/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/types/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/math/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/mathlib/fastrts
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/controllerInterface/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/focInterface/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/gateDriverInterface/DRV8329A
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/gateDriverInterface/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/appLib/include
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/motorConfig/DRV8329_1SH_MTR1
+            -I${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/universal_launchPad_boosterpack_solutions/1Shunt_Sensorless_FOC_DRV8329
+            -DDRV8329AEVM_REVA
+            -DMOTOR_SINGLE_SHUNT
+            -DDATALOGF2_EN
+        "
+        linkerBuildOptions="
+            -Wl,--diag_suppress=10063
+            -Wl,--ram_model
+            -Wl,--reread_libs
+            -i${COM_TI_AM13E2X_SDK_INSTALL_DIR}/build/am13e2x/lib/${ConfigName}
+            -llibti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibarch_ti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibdriverlib_ti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibutils_nortos_ti_sdk_cfg_default_m33_ti_arm_clang.a
+            -llibam13e2x_m33_ti_arm_clang.a
+        "
+        >
+    <configuration name="Debug"
+        compilerBuildOptions="
+            -D_DEBUG
+        "
+        linkerBuildOptions="
+        "
+    />
+    <configuration name="Release"
+        compilerBuildOptions="
+            -O3
+        "
+        linkerBuildOptions="
+        "
+    />
+
+    <!-- Linker command file - Project-specific linker with motor_ctrl_vars section -->
+    <file action="link"
+        path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/universal_launchPad_boosterpack_solutions/1Shunt_Sensorless_FOC_DRV8329/am13e2x_som/m33_nortos/ti_arm_clang/linker_m33_ti_arm_clang.cmd"
+        targetDirectory=""
+    />
+
+    <!-- SysConfig file -->
+    <file path="../1Shunt_Sensorless_FOC_DRV8329.syscfg" openOnCreation="false" excludeFromBuild="false" action="link">
+    </file>
+
+    <!-- Main application files -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/universal_launchPad_boosterpack_solutions/1Shunt_Sensorless_FOC_DRV8329/main.c" targetDirectory="."/>
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/universal_launchPad_boosterpack_solutions/1Shunt_Sensorless_FOC_DRV8329/main.h" targetDirectory="."/>
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/universal_launchPad_boosterpack_solutions/1Shunt_Sensorless_FOC_DRV8329/isr.c" targetDirectory="."/>
+
+    <!-- realtimelib - Control -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/pi/source/pi.c" targetDirectory="realtimelib/control/pi/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/pi/include/pi.h" targetDirectory="realtimelib/control/pi/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/pr/source/pr.c" targetDirectory="realtimelib/control/pr/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/pr/include/pr.h" targetDirectory="realtimelib/control/pr/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/ipd/source/ipd.c" targetDirectory="realtimelib/control/ipd/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/ipd/include/ipd.h" targetDirectory="realtimelib/control/ipd/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/dead_time_comp/source/dead_time_comp.c" targetDirectory="realtimelib/control/dead_time_comp/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/dead_time_comp/include/dead_time_comp.h" targetDirectory="realtimelib/control/dead_time_comp/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/fwc/source/fwc.c" targetDirectory="realtimelib/control/fwc/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/fwc/include/fwc.h" targetDirectory="realtimelib/control/fwc/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/mtpa/source/mtpa.c" targetDirectory="realtimelib/control/mtpa/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/mtpa/include/mtpa.h" targetDirectory="realtimelib/control/mtpa/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/vs_freq/source/vs_freq.c" targetDirectory="realtimelib/control/vs_freq/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/vs_freq/include/vs_freq.h" targetDirectory="realtimelib/control/vs_freq/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/vsf/source/vsf.c" targetDirectory="realtimelib/control/vsf/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/vsf/include/vsf.h" targetDirectory="realtimelib/control/vsf/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/dclink_ss/source/dclink_ss.c" targetDirectory="realtimelib/control/dclink_ss/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/dclink_ss/include/dclink_ss.h" targetDirectory="realtimelib/control/dclink_ss/" />
+
+    <!-- realtimelib - Transforms -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/clarke/source/clarke.c" targetDirectory="realtimelib/transforms/clarke/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/clarke/include/clarke.h" targetDirectory="realtimelib/transforms/clarke/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/ipark/source/ipark.c" targetDirectory="realtimelib/transforms/ipark/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/ipark/include/ipark.h" targetDirectory="realtimelib/transforms/ipark/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/park/source/park.c" targetDirectory="realtimelib/transforms/park/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/park/include/park.h" targetDirectory="realtimelib/transforms/park/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/svgen/source/svgen.c" targetDirectory="realtimelib/transforms/svgen/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/svgen/include/svgen.h" targetDirectory="realtimelib/transforms/svgen/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/svgen/source/svgen_current.c" targetDirectory="realtimelib/transforms/svgen/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/svgen/include/svgen_current.h" targetDirectory="realtimelib/transforms/svgen/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/volts/source/volt_recons.c" targetDirectory="realtimelib/transforms/volts/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/transforms/volts/include/volt_recons.h" targetDirectory="realtimelib/transforms/volts/" />
+
+    <!-- realtimelib - Filter -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/filter/filter_fo/source/filter_fo.c" targetDirectory="realtimelib/filter/filter_fo/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/filter/filter_fo/include/filter_fo.h" targetDirectory="realtimelib/filter/filter_fo/" />
+
+    <!-- realtimelib - Observers -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/esmo/source/esmo.c" targetDirectory="realtimelib/observers/esmo/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/esmo/include/esmo.h" targetDirectory="realtimelib/observers/esmo/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/speedfr/source/speedfr.c" targetDirectory="realtimelib/observers/speedfr/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/speedfr/include/speedfr.h" targetDirectory="realtimelib/observers/speedfr/" />
+
+    <!-- realtimelib - Observers - EST Library -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/est.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/userParams.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/motor.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/est_states.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/est_Flux_states.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/est_Ls_states.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/est_Rr_states.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/est_Rs_states.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/observers/est_lib/include/est_Traj_states.h" targetDirectory="realtimelib/observers/est_lib/include/" />
+
+    <!-- realtimelib - Control - TiTune -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/source/TiTune_Flux.c" targetDirectory="realtimelib/control/TiTune/source/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/include/TiTune_Flux.h" targetDirectory="realtimelib/control/TiTune/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/source/TiTune_J.c" targetDirectory="realtimelib/control/TiTune/source/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/include/TiTune_J.h" targetDirectory="realtimelib/control/TiTune/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/source/TiTune_LDQ.c" targetDirectory="realtimelib/control/TiTune/source/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/include/TiTune_LDQ.h" targetDirectory="realtimelib/control/TiTune/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/source/TiTune_Rs.c" targetDirectory="realtimelib/control/TiTune/source/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/include/TiTune_Rs.h" targetDirectory="realtimelib/control/TiTune/include/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/source/TiTune_SatLDQ.c" targetDirectory="realtimelib/control/TiTune/source/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/control/TiTune/include/TiTune_SatLDQ.h" targetDirectory="realtimelib/control/TiTune/include/" />
+
+    <!-- realtimelib - Utilities -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/angle_gen/source/angle_gen.c" targetDirectory="realtimelib/utilities/angle_gen/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/angle_gen/include/angle_gen.h" targetDirectory="realtimelib/utilities/angle_gen/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/traj/source/traj.c" targetDirectory="realtimelib/utilities/traj/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/traj/include/traj.h" targetDirectory="realtimelib/utilities/traj/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/cpu_time/source/cpu_time.c" targetDirectory="realtimelib/utilities/cpu_time/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/cpu_time/include/cpu_time.h" targetDirectory="realtimelib/utilities/cpu_time/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/datalog/source/datalogIF.c" targetDirectory="realtimelib/utilities/datalog/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/datalog/include/datalogIF.h" targetDirectory="realtimelib/utilities/datalog/" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/utilities/types/include/types.h" targetDirectory="realtimelib/utilities/types/" />
+
+    <!-- realtimelib - Math -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/source/realtimelib/math/include/ti_math.h" targetDirectory="realtimelib/math/" />
+
+    <!-- Common - Application Library -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/appLib" targetDirectory="appLib" />
+
+    <!-- controller Interface - HAL -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/controllerInterface" targetDirectory="hal/controllerInterface" />
+
+    <!-- Gate Driver Interface - HAL -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/gateDriverInterface/DRV8329A" targetDirectory="hal/gateDriverInterface" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/gateDriverInterface/include" targetDirectory="hal/gateDriverInterface" />
+
+    <!-- FOC Interface - HAL -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/focInterface/include" targetDirectory="hal/focInterface/include" />
+
+    <!-- FOC Interface - Shunt Selection -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/focInterface/source/hal_3SH_FOCInterface.c" targetDirectory="hal/focInterface/source" />
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/hal/focInterface/source/hal_1SH_FOCInterface.c" targetDirectory="hal/focInterface/source" />
+
+    <!-- Motor Configuration Files - DRV8329 1-Shunt Motor 1 -->
+    <file action="link" path="${COM_TI_AM13E2X_SDK_INSTALL_DIR}/solutions/motor_control/common/motorConfig/DRV8329_1SH_MTR1/"
+          targetDirectory="motorConfig/" />
+
+  </project>
+</projectSpec>

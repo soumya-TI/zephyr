@@ -1,0 +1,54 @@
+<test width="320" height="480">
+	<!-- Interaction coverage: `lvglpro screenshot` renders but cannot click, and a
+	     render is not evidence a control works - every button here drew correctly
+	     for several iterations while its full-size layout row, an lv_obj and so
+	     clickable by default, ate the press.
+
+	     Extends the shipping screen so the test cannot drift from what runs. -->
+	<view extends="run" />
+
+	<steps>
+		<!-- ══ Brief item 1: start / stop ═══════════════════════════════════════ -->
+		<subject_compare subject="subject_state" value="0" />
+		<click_at x="159" y="351" />
+		<wait ms="120" />
+		<subject_compare subject="subject_state" value="1" />
+
+		<!-- Stop takes the same slot once Start hides, so the identical coordinate
+		     must now stop the drive. -->
+		<click_at x="159" y="351" />
+		<wait ms="120" />
+		<subject_compare subject="subject_state" value="0" />
+
+		<!-- ══ Emergency stop ═══════════════════════════════════════════════════
+		     The touch E-stop must reach the same state the physical button will. -->
+		<click_at x="159" y="351" />
+		<wait ms="120" />
+		<subject_compare subject="subject_state" value="1" />
+		<click_at x="44" y="70" />
+		<wait ms="120" />
+		<subject_compare subject="subject_state" value="0" />
+
+		<!-- ══ Brief items 2 and 5: speed reference ═════════════════════════════ -->
+		<subject_set subject="subject_rpm_ref" value="1200" />
+		<click_at x="272" y="184" />
+		<wait ms="120" />
+		<subject_compare subject="subject_rpm_ref" value="1250" />
+
+		<click_at x="48" y="184" />
+		<wait ms="120" />
+		<subject_compare subject="subject_rpm_ref" value="1200" />
+
+		<!-- Walking into the ceiling proves max_value is clamping, rather than the
+		     value simply not having got there yet. -->
+		<subject_set subject="subject_rpm_ref" value="3600" />
+		<click_at x="272" y="184" />
+		<wait ms="120" />
+		<subject_compare subject="subject_rpm_ref" value="3600" />
+
+		<subject_set subject="subject_rpm_ref" value="0" />
+		<click_at x="48" y="184" />
+		<wait ms="120" />
+		<subject_compare subject="subject_rpm_ref" value="0" />
+	</steps>
+</test>

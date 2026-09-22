@@ -1,0 +1,387 @@
+<globals>
+	<api>
+	</api>
+
+	<consts>
+		<!-- ══ Palette ══════════════════════════════════════════════════════════
+		     ../DESIGN_LANGUAGE.md re-keyed to dark. Only the luminance flips: the
+		     hairline border does the shadow's work, and accents get brighter. -->
+
+		<!-- Canvas is a gradient - it stops cards disappearing into the page. -->
+		<color name="const_canvas" value="0x0E1113" />
+		<color name="const_canvas_grad" value="0x151B20" />
+
+		<!-- Cards step UP from the canvas; insets step DOWN past it, so a tile
+		     still reads as recessed. -->
+		<color name="const_surface_card" value="0x191E23" />
+		<color name="const_surface_inset" value="0x0B0E10" />
+		<color name="const_surface_raised" value="0x232930" />
+
+		<color name="const_border" value="0x2B333A" />
+		<color name="const_border_strong" value="0x3A444C" />
+		<color name="const_divider" value="0x222930" />
+		<color name="const_track" value="0x262E35" />
+
+		<!-- Ink. Not pure white, mirroring the system's refusal of pure black. -->
+		<color name="const_text_primary" value="0xF1F4F6" />
+		<color name="const_text_secondary" value="0x939CA3" />
+		<color name="const_text_tertiary" value="0x69737A" />
+		<color name="const_text_overline" value="0x7E888F" />
+
+		<!-- Green means the motor is turning or a check passed. Nothing else. -->
+		<color name="const_accent" value="0x1BC46E" />
+		<color name="const_accent_pressed" value="0x14A25A" />
+
+		<color name="const_warn" value="0xF0A22E" />
+		<color name="const_danger" value="0xF25449" />
+		<color name="const_danger_pressed" value="0xC93E35" />
+
+		<!-- Ink ON a filled accent. Dark, not white: white sits near 2:1 against
+		     #1BC46E where the canvas ink clears 9:1. -->
+		<color name="const_on_accent" value="0x07130C" />
+		<!-- Danger is dark enough to keep white on top. -->
+		<color name="const_on_danger" value="0xFFFFFF" />
+		<!-- Ink for the SOLID red E-stop callout. Black on saturated red is both the
+		     highest-contrast pairing here and what real E-stop signage uses. -->
+		<color name="const_on_danger_solid" value="0x150404" />
+
+		<!-- Chip washes: ~15% lifts of the hue off the card. Never used behind one. -->
+		<color name="const_tint_neutral" value="0x232A31" />
+		<color name="const_tint_accent" value="0x11301F" />
+		<color name="const_tint_danger" value="0x361A18" />
+		<color name="const_tint_warn" value="0x33260E" />
+
+		<!-- ══ Space ═══════════════════════════════════════════════════════════ -->
+		<px name="const_space_2" value="2" />
+		<px name="const_space_4" value="4" />
+		<px name="const_space_8" value="8" />
+		<px name="const_space_12" value="12" />
+		<px name="const_space_16" value="16" />
+		<px name="const_space_20" value="20" />
+		<px name="const_space_24" value="24" />
+
+		<!-- ══ Shape ═══════════════════════════════════════════════════════════
+		     One step below the kiosk's 10/14/18/22: a radius that reads crisp on a
+		     440px card reads as a blob on a 288px one. -->
+		<px name="const_radius_sm" value="8" />
+		<px name="const_radius_md" value="12" />
+		<px name="const_radius_lg" value="16" />
+		<px name="const_radius_pill" value="999" />
+
+		<!-- ══ Geometry ════════════════════════════════════════════════════════
+		     Gutter drops 40 -> 16, holding the kiosk's 5%-of-width proportion. -->
+		<px name="const_screen_w" value="320" />
+		<px name="const_screen_h" value="480" />
+		<px name="const_gutter" value="16" />
+		<px name="const_content_w" value="288" />
+		<px name="const_header_h" value="56" />
+		<px name="const_tabbar_h" value="76" />
+		<!-- 9mm at this panel's ~165 ppi is 56px, not the 44-48 a phone suggests,
+		     and it is operated gloved beside a vibrating machine. 56 is the floor. -->
+		<px name="const_touch_lg" value="72" />
+
+		<!-- The bottom bar holds exactly two destinations, half the width each;
+		     Trend and Setup are demoted to header actions. -->
+		<px name="const_nav_primary_w" value="160" />
+		<px name="const_header_action" value="40" />
+
+		<!-- ══ Drive limits ════════════════════════════════════════════════════
+		     Nameplate for the LP-AM13E230's demo BLDC. 3600 needs four digits,
+		     which is why the RPM instrument is a four-roller odometer. -->
+		<int name="const_speed_min" value="0" />
+		<int name="const_speed_max" value="3600" />
+		<int name="const_speed_step" value="50" />
+		<!-- The down-step needs its own const: the DSL has no arithmetic, so
+		     "-#const_speed_step" is a parse error. Keep the two in step. -->
+		<int name="const_speed_step_down" value="-50" />
+
+		<!-- ══ Enum mirrors ════════════════════════════════════════════════════ -->
+		<int name="ref_state_stopped" value="0" />
+		<int name="ref_state_running" value="1" />
+		<int name="ref_state_fault" value="2" />
+
+		<int name="ref_dir_cw" value="0" />
+		<int name="ref_dir_ccw" value="1" />
+
+		<int name="ref_off" value="0" />
+		<int name="ref_on" value="1" />
+	</consts>
+
+	<fonts>
+		<!-- Five faces, two weights. Every range is ASCII plus 0xB0 - the UI is
+		     English and the only non-ASCII glyph it prints is the degree sign in
+		     "°C". A full Latin-1 range costs 2.4x the flash for 129 glyphs no
+		     label can reach. Sizes, not weights, are what cost flash: one font is
+		     one size at one weight, so the ladder is deliberately four steps. -->
+
+		<!-- The RPM readout. Digits, minus, dot and space only - a full range at
+		     64px/2bpp is ~20 kB of flash no label can select. -->
+		<bin name="font_hero_64" size="64" bpp="2" as_file="false"
+			src_path="fonts/Gabarito-Bold.ttf" range="0x20,0x2D,0x2E,0x30-0x39" />
+
+		<bin name="font_semibold_28" size="28" bpp="2" as_file="false"
+			src_path="fonts/Gabarito-SemiBold.ttf" range="0x20-0x7E, 0xB0" />
+		<bin name="font_semibold_20" size="20" bpp="2" as_file="false"
+			src_path="fonts/Gabarito-SemiBold.ttf" range="0x20-0x7E, 0xB0" />
+		<bin name="font_semibold_15" size="15" bpp="2" as_file="false"
+			src_path="fonts/Gabarito-SemiBold.ttf" range="0x20-0x7E, 0xB0" />
+		<bin name="font_semibold_12" size="12" bpp="2" as_file="false"
+			src_path="fonts/Gabarito-SemiBold.ttf" range="0x20-0x7E, 0xB0" />
+	</fonts>
+
+	<subjects>
+		<!-- ══ Drive state ═════════════════════════════════════════════════════ -->
+		<int name="subject_state" value="0" min_value="0" max_value="2"
+			help="Mirror of ref_state_*. What the drive is actually doing.
+               Written from XML by subject_set_int_event on the run/stop button
+               (stopped&lt;-&gt;running) and by motor_sim.c when it trips a fault.
+               Everything visual keys off this: the header chip, the run button's
+               fill, the odometer tint, the fault banner." />
+
+		<int name="subject_rpm_ref" value="1200"
+			min_value="0" max_value="3600"
+			help="Reference (commanded) speed in whole RPM - brief item 5. SOLE
+               WRITER is the stepper on the run screen, via subject_increment_event
+               with step=50 and these same clamps read back declaratively. No C
+               touches it: the DSL can write a subject, it just cannot compute one." />
+
+		<int name="subject_rpm_act" value="0"
+			min_value="0" max_value="3600"
+			help="Measured shaft speed in whole RPM - brief item 3. DERIVED: the
+               sole writer is motor_sim.c, which ramps it toward subject_rpm_ref.
+               Never write it from XML. The sibling thermostat documents a real
+               race when two writers shared a derived subject and child order
+               decided the winner." />
+
+		<!-- ══ Telemetry ═══════════════════════════════════════════════════════ -->
+		<string name="subject_current_str" value="0.0"
+			help="Phase current in amps, one decimal. A string because the value
+               has a decimal point and the DSL cannot divide to place it -
+               motor_sim.c formats it. Ints elsewhere print via bind_text-fmt." />
+		<int name="subject_temp" value="31"
+			help="Power-stage temperature, whole degrees C. Drives the amber
+               derate chip once it passes the warn threshold." />
+		<int name="subject_load" value="0" min_value="0" max_value="100"
+			help="Torque demand as a percentage of rated. Whole percent, printed
+               with bind_text-fmt '%d%%' - no projection needed." />
+		<string name="subject_bus_str" value="24.0"
+			help="DC bus voltage, one decimal. Same reasoning as current." />
+
+		<!-- ══ Trend summary ═══════════════════════════════════════════════════ -->
+		<int name="subject_peak_rpm" value="0" help="Session peak of subject_rpm_act." />
+		<int name="subject_avg_load" value="0" help="Session mean of subject_load, percent." />
+		<string name="subject_runtime_str" value="00:00" help="Time since the last start, mm:ss." />
+
+		<!-- ══ Faults ══════════════════════════════════════════════════════════ -->
+		<int name="subject_fault_count" value="0" min_value="0" max_value="99"
+			help="Number of latched faults. Zero means the log is clear, which is
+               what the faults screen's empty state binds against. Cleared to 0
+               from XML by subject_set_int_event - brief item 4 needs no C." />
+		<int name="subject_fault_active" value="0" min_value="0" max_value="1"
+			help="0/1 - at least one fault is latched and blocking a start." />
+
+		<!-- ══ Configuration ═══════════════════════════════════════════════════ -->
+		<int name="subject_dir" value="0" min_value="0" max_value="1"
+			help="Mirror of ref_dir_*. Commanded rotation direction." />
+		<int name="subject_ramp" value="5" min_value="1" max_value="20"
+			help="Acceleration ramp in units of 100 RPM/s. Read by motor_sim.c to
+               decide how fast subject_rpm_act chases subject_rpm_ref." />
+		<int name="subject_cfg_softstart" value="1" help="0/1 - ramp instead of stepping to reference." />
+		<int name="subject_cfg_reverse" value="0" help="0/1 - permit direction reversal while running." />
+		<int name="subject_cfg_derate" value="1" help="0/1 - fold back current on over-temperature." />
+
+		<!-- ══ Chrome ══════════════════════════════════════════════════════════ -->
+
+		<int name="subject_alert_never" value="0" min_value="0" max_value="0"
+			help="Placeholder subject for widgets that need a binding but have no
+               state to bind - the corpus's subj_default idiom. tab_item's `alert`
+               prop defaults to it, so the three tabs that cannot raise an alarm
+               bind to something that is permanently 0 instead of the prop being
+               required at every call site." />
+
+		<int name="subject_tab" value="0" min_value="0" max_value="3"
+			help="Which of the four screens is showing. Each screen stamps this in
+               its own screen_loaded handler via subject_set_int_event, and the
+               tab bar lights its active item by comparing against it with
+               bind_style. That indirection is what lets tab_bar be ONE component
+               with no props instead of four tone props threaded per screen." />
+	</subjects>
+
+	<images>
+		<!-- The LVGL x Texas Instruments lockup, white on alpha. -->
+		<data name="image_logostrip" src_path="images/logostrip.png" color_format="rgb565a8" />
+
+		<data name="icon_tab_run" src_path="images/icon_tab_run.png" color_format="rgb565a8" />
+		<data name="icon_tab_trend" src_path="images/icon_tab_trend.png" color_format="rgb565a8" />
+		<data name="icon_tab_faults" src_path="images/icon_tab_faults.png" color_format="rgb565a8" />
+		<data name="icon_tab_config" src_path="images/icon_tab_config.png" color_format="rgb565a8" />
+
+		<data name="icon_minus" src_path="images/icon_minus.png" color_format="rgb565a8" />
+		<data name="icon_plus" src_path="images/icon_plus.png" color_format="rgb565a8" />
+
+		<data name="icon_estop" src_path="images/icon_estop.png" color_format="rgb565a8" />
+
+
+		<data name="icon_dir_cw" src_path="images/icon_dir_cw.png" color_format="rgb565a8" />
+		<data name="icon_dir_ccw" src_path="images/icon_dir_ccw.png" color_format="rgb565a8" />
+		<data name="icon_clear" src_path="images/icon_clear.png" color_format="rgb565a8" />
+		<data name="icon_check" src_path="images/icon_check.png" color_format="rgb565a8" />
+	</images>
+
+	<styles>
+		<!-- ══ Type ladder ═════════════════════════════════════════════════════
+		     Negative tracking scales with size, so large type reads as one mass.
+		     The overline is the only uppercase, positively-tracked style. -->
+		<style name="style_hero_unit" text_font="font_semibold_20" text_letter_space="-1" />
+		<style name="style_stat_lg" text_font="font_semibold_28" text_letter_space="-1" />
+		<style name="style_heading" text_font="font_semibold_20" />
+		<style name="style_stat_md" text_font="font_semibold_20" />
+		<style name="style_title" text_font="font_semibold_15" />
+		<style name="style_subtitle" text_font="font_semibold_15" />
+		<style name="style_body_strong" text_font="font_semibold_15" />
+		<style name="style_chip" text_font="font_semibold_12" />
+		<style name="style_meta" text_font="font_semibold_12" />
+		<style name="style_badge" text_font="font_semibold_12" />
+		<style name="style_overline" text_font="font_semibold_12" text_letter_space="1" />
+
+		<!-- Titles carry no colour - emphasis is size, never hue. -->
+		<style name="style_ink" text_color="#const_text_primary" />
+		<style name="style_ink_secondary" text_color="#const_text_secondary" />
+		<style name="style_ink_tertiary" text_color="#const_text_tertiary" />
+		<style name="style_ink_overline" text_color="#const_text_overline" />
+		<style name="style_ink_accent" text_color="#const_accent" />
+		<style name="style_ink_danger" text_color="#const_danger" />
+		<style name="style_ink_on_accent" text_color="#const_on_accent" />
+		<style name="style_ink_on_danger_solid" text_color="#const_on_danger_solid" />
+
+		<!-- ══ Grounds and surfaces ════════════════════════════════════════════ -->
+		<style name="style_screen_base" border_width="0" radius="0"
+			shadow_width="0" shadow_opa="0" pad_all="0" />
+
+		<style name="style_canvas" bg_color="#const_canvas" bg_opa="100%"
+			bg_grad_color="#const_canvas_grad" bg_grad_dir="ver" />
+
+		<!-- Border and fill, no shadow: a dark shadow on a dark canvas is an
+		     invisible blur, so the hairline alone carries the edge. -->
+		<style name="style_card" bg_color="#const_surface_card" bg_opa="100%"
+			border_color="#const_border" border_width="1"
+			radius="#const_radius_lg" shadow_width="0" shadow_opa="0" />
+
+		<!-- Steps DOWN past the canvas, so it reads as milled into the card. -->
+		<style name="style_inset" bg_color="#const_surface_inset" bg_opa="100%"
+			border_width="0" radius="#const_radius_md"
+			shadow_width="0" shadow_opa="0" />
+
+
+
+		<!-- Shape only. Padding CANNOT live here: `row` writes style_pad_* as local
+		     values, which beat an added style. Chip padding is passed as row props. -->
+		<style name="style_chip_base" radius="#const_radius_pill" border_width="0" />
+		<style name="style_chip_accent" bg_color="#const_tint_accent" bg_opa="100%" />
+		<style name="style_chip_danger" bg_color="#const_tint_danger" bg_opa="100%" />
+
+		<style name="style_dot_neutral" bg_color="#const_text_secondary" bg_opa="100%" />
+		<style name="style_dot_accent" bg_color="#const_accent" bg_opa="100%" />
+		<style name="style_dot_danger" bg_color="#const_danger" bg_opa="100%" />
+
+		<!-- ══ Buttons ═════════════════════════════════════════════════════════
+		     Nothing moves on interaction; the pressed state is a fill change. -->
+		<style name="style_btn_base" radius="#const_radius_md" border_width="0"
+			shadow_width="0" shadow_opa="0" />
+
+		<style name="style_btn_accent" bg_color="#const_accent" bg_opa="100%" />
+		<style name="style_btn_accent_pressed" bg_color="#const_accent_pressed" bg_opa="100%" />
+
+		<style name="style_btn_danger" bg_color="#const_danger" bg_opa="100%" />
+		<style name="style_btn_danger_pressed" bg_color="#const_danger_pressed" bg_opa="100%" />
+
+		<!-- The secondary tier: outlined, not filled, so Clear faults and the stepper
+		     do not spend a destructive-looking red. -->
+		<style name="style_btn_ghost" bg_color="#const_surface_raised" bg_opa="100%"
+			border_color="#const_border_strong" border_width="1" />
+		<style name="style_btn_ghost_pressed" bg_color="#const_border_strong" bg_opa="100%" />
+
+		<!-- Chromeless button. Use this instead of <remove_style_all/> on anything
+		     that sets its own width/height: that element is processed AFTER the size
+		     attributes and wipes them. Three bugs in this project so far. -->
+		<style name="style_btn_flat" bg_opa="0" border_width="0" shadow_width="0"
+			shadow_opa="0" pad_all="0" radius="#const_radius_sm" />
+
+		<style name="style_btn_disabled" bg_color="#const_surface_raised" bg_opa="100%"
+			border_width="0" />
+
+		<!-- ══ Icons ═══════════════════════════════════════════════════════════
+		     Every glyph is black-on-alpha and recoloured here, so one PNG serves
+		     every tone. Never ship a second copy of an icon in another colour. -->
+		<style name="style_icon_ink" image_recolor="#const_text_primary" image_recolor_opa="255" />
+		<style name="style_icon_secondary" image_recolor="#const_text_secondary" image_recolor_opa="255" />
+		<style name="style_icon_tertiary" image_recolor="#const_text_tertiary" image_recolor_opa="255" />
+		<style name="style_icon_accent" image_recolor="#const_accent" image_recolor_opa="255" />
+		<style name="style_icon_danger" image_recolor="#const_danger" image_recolor_opa="255" />
+		<style name="style_icon_on_accent" image_recolor="#const_on_accent" image_recolor_opa="255" />
+		<style name="style_icon_on_danger" image_recolor="#const_on_danger" image_recolor_opa="255" />
+		<style name="style_icon_on_danger_solid" image_recolor="#const_on_danger_solid"
+			image_recolor_opa="255" />
+
+		<!-- The RPM readout. One label now, not four rollers - so no part styles,
+		     no anim_duration, and the tone binds apply to the label itself. -->
+		<style name="style_hero" text_font="font_hero_64" text_letter_space="-3"
+			text_color="#const_text_primary" />
+		<!-- Digit tone by state: dim when stopped, full ink running, red on fault. -->
+		<style name="style_hero_dim" text_color="#const_text_tertiary" />
+		<style name="style_hero_fault" text_color="#const_danger" />
+
+		<!-- Kills the theme scrollbar lv_table draws even when its columns fill the
+		     width, where it reads as a stray rule under the last row. -->
+		<style name="style_scrollbar_hidden" width="0" bg_opa="0" pad_all="0" />
+
+		<!-- ══ Table ═══════════════════════════════════════════════════════════
+		     The `items` part styles EVERY cell uniformly - no per-cell colour
+		     without a C draw event - so severity is a column of text, not a fill. -->
+		<style name="style_table" bg_opa="0" border_width="0" pad_all="0"
+			radius="0" shadow_width="0" shadow_opa="0" />
+		<style name="style_table_cell" bg_color="#const_surface_card" bg_opa="0"
+			border_color="#const_divider" border_width="1" border_side="bottom"
+			pad_left="0" pad_right="8" pad_top="7" pad_bottom="7"
+			text_font="font_semibold_12" text_color="#const_text_primary" />
+
+		<!-- ══ Chart ═══════════════════════════════════════════════════════════ -->
+		<style name="style_chart" bg_opa="0" border_width="0" radius="0"
+			pad_all="0" shadow_width="0" shadow_opa="0"
+			line_color="#const_divider" line_width="1"
+			line_dash_width="3" line_dash_gap="4" />
+		<!-- Markerless: at 30 points across 256px the dots merge into a rope. -->
+		<style name="style_chart_items" width="0" height="0" line_width="2" />
+
+		<!-- The tick is bg_image_src on the indicator's `checked` state - a real
+		     Lucide glyph, not the theme's symbol-font mark. -->
+		<!-- The label must sit a step ABOVE the meta line beneath it, or the two
+		     read as one block. pad_column pairs with the meta's pad_left="36":
+		     24px indicator + 12px column is where the label's text starts. -->
+		<style name="style_checkbox" bg_opa="0" border_width="0" pad_all="0"
+			pad_column="12" text_font="font_semibold_15"
+			text_color="#const_text_primary" />
+		<style name="style_checkbox_ind" width="24" height="24"
+			radius="6" bg_opa="0"
+			border_color="#const_border_strong" border_width="2" />
+		<style name="style_checkbox_ind_checked" bg_color="#const_accent" bg_opa="100%"
+			border_color="#const_accent" border_width="2"
+			bg_image_src="icon_check" bg_image_recolor="#const_on_accent"
+			bg_image_recolor_opa="255" />
+
+		<!-- ══ Segmented control ═══════════════════════════════════════════════
+		     Selection is tint + border, never a colour swap, and nothing resizes. -->
+		<style name="style_seg" bg_color="#const_surface_raised" bg_opa="100%"
+			border_color="#const_border_strong" border_width="1"
+			radius="#const_radius_md" />
+		<style name="style_seg_selected" bg_color="#const_tint_accent" bg_opa="100%"
+			border_color="#const_accent" border_width="2"
+			radius="#const_radius_md" />
+
+		<!-- ══ Bars ════════════════════════════════════════════════════════════ -->
+		<style name="style_bar_accent" radius="#const_radius_pill"
+			bg_color="#const_accent" bg_opa="100%" />
+		<style name="style_bar_warn" radius="#const_radius_pill"
+			bg_color="#const_warn" bg_opa="100%" />
+	</styles>
+</globals>

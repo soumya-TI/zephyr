@@ -1,0 +1,136 @@
+<screen>
+	<!-- The operating screen. The odometer is deliberately NOT in a card: the whole
+	     screen is the instrument face, and boxing the digits would make them one
+	     element among several. -->
+	<styles>
+		<style name="style_body_pad" pad_left="#const_gutter" pad_right="#const_gutter" />
+	</styles>
+
+	<view extends="lv_obj" width="#const_screen_w" height="#const_screen_h" scrollable="false">
+		<style name="style_screen_base" />
+		<style name="style_canvas" />
+
+		<subject_set_int_event subject="subject_tab" value="0" trigger="screen_loaded" />
+
+		<column width="#const_screen_w" height="#const_screen_h" cross_align="center">
+			<header />
+
+			<!-- ══ Bezel strip ══════════════════════════════════════════════════
+			     The E-stop tag is flush to x=0: it is signage for the push button
+			     just off the glass, so a gutter would break the pointing. -->
+			<row
+				width="#const_screen_w"
+				height="30"
+				cross_align="center"
+				main_align="space_between"
+				pad_right="#const_gutter"
+			>
+				<estop_tag />
+
+				<row gap="#const_space_4" cross_align="center">
+					<lv_image src="icon_dir_cw" width="16" height="16">
+						<style name="style_icon_tertiary" />
+						<bind_flag_if_not_eq flag="hidden" subject="subject_dir" ref_value="#ref_dir_cw" />
+					</lv_image>
+					<lv_image src="icon_dir_ccw" width="16" height="16">
+						<style name="style_icon_tertiary" />
+						<bind_flag_if_not_eq flag="hidden" subject="subject_dir" ref_value="#ref_dir_ccw" />
+					</lv_image>
+					<label text="CW">
+						<style name="style_overline" />
+						<style name="style_ink_overline" />
+						<bind_flag_if_not_eq flag="hidden" subject="subject_dir" ref_value="#ref_dir_cw" />
+					</label>
+					<label text="CCW">
+						<style name="style_overline" />
+						<style name="style_ink_overline" />
+						<bind_flag_if_not_eq flag="hidden" subject="subject_dir" ref_value="#ref_dir_ccw" />
+					</label>
+				</row>
+			</row>
+
+			<!-- ══ The instrument ═══════════════════════════════════════════════ -->
+			<!-- No caption: four digits and the word RPM are already unambiguous. -->
+			<column width="#const_content_w" height="content" cross_align="center" pad_top="#const_space_24">
+				<odometer />
+			</column>
+
+			<!-- ══ Reference speed ══════════════════════════════════════════════
+			     Discrete steps, not a slider: `bind_value` is one-way, so a dragged
+			     slider cannot write its subject back without C. -->
+			<row
+				width="#const_content_w"
+				height="content"
+				cross_align="center"
+				main_align="space_between"
+				pad_top="#const_space_20"
+			>
+				<btn_step icon="icon_minus">
+					<subject_increment_event
+						subject="subject_rpm_ref"
+						step="#const_speed_step_down"
+						min_value="#const_speed_min"
+						max_value="#const_speed_max"
+						trigger="clicked"
+					/>
+					<subject_increment_event
+						subject="subject_rpm_ref"
+						step="#const_speed_step_down"
+						min_value="#const_speed_min"
+						max_value="#const_speed_max"
+						trigger="long_pressed_repeat"
+					/>
+				</btn_step>
+
+				<column cross_align="center" gap="#const_space_2">
+					<label text="REFERENCE">
+						<style name="style_overline" />
+						<style name="style_ink_overline" />
+					</label>
+					<row gap="#const_space_4" cross_align="end">
+						<label bind_text="subject_rpm_ref" bind_text-fmt="%d" text="1200">
+							<style name="style_stat_lg" />
+							<style name="style_ink" />
+						</label>
+						<label text="RPM" style_pad_bottom="4">
+							<style name="style_meta" />
+							<style name="style_ink_tertiary" />
+						</label>
+					</row>
+				</column>
+
+				<btn_step icon="icon_plus">
+					<subject_increment_event
+						subject="subject_rpm_ref"
+						step="#const_speed_step"
+						min_value="#const_speed_min"
+						max_value="#const_speed_max"
+						trigger="clicked"
+					/>
+					<subject_increment_event
+						subject="subject_rpm_ref"
+						step="#const_speed_step"
+						min_value="#const_speed_min"
+						max_value="#const_speed_max"
+						trigger="long_pressed_repeat"
+					/>
+				</btn_step>
+			</row>
+
+			<!-- ══ Live telemetry ══════════════════════════════════════════════ -->
+			<row width="#const_content_w" height="content" main_align="space_between" pad_top="#const_space_12">
+				<stat caption="CURRENT" value="subject_current_str" fmt="%s" placeholder="0.0" unit="A" col_w="96" />
+				<stat caption="TEMP" value="subject_temp" fmt="%d" placeholder="31" unit="&#176;C" col_w="96" />
+				<stat caption="LOAD" value="subject_load" fmt="%d" placeholder="0" unit="%" col_w="96" />
+			</row>
+
+			<container name="hero_space" width="#const_screen_w" flex_grow="1" />
+
+			<btn_run />
+
+			<container name="btn_gap" width="#const_screen_w" height="#const_space_16" />
+
+			<tab_bar />
+		</column>
+	</view>
+</screen>

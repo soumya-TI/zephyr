@@ -1,0 +1,30 @@
+<component>
+  <!-- Tone arrives as three style props, so a new tone is a globals.xml edit
+       rather than a new component. -->
+  <previews><preview width="200" height="48" style_bg_color="0x191E23" /></previews>
+  <api>
+    <prop name="text" type="string" default="Ready" />
+    <prop name="tone" type="style" />
+    <prop name="tone_dot" type="style" />
+    <prop name="tone_label" type="style" />
+  </api>
+  <view extends="row" height="content" width="content" gap="#const_space_8"
+        cross_align="center" pad_left="12" pad_right="14"
+        pad_top="7" pad_bottom="7">
+    <style name="style_chip_base" />
+    <style name="$tone" />
+
+    <!-- `container`, not lv_obj + <remove_style_all/>: that child is processed
+         after width/height and wipes them. The dot filled the whole header. -->
+    <container name="dot" width="7" height="7" style_radius="#const_radius_pill">
+      <style name="style_dot_neutral" />
+      <style name="$tone_dot" />
+    </container>
+
+    <label text="$text">
+      <style name="style_chip" />
+      <style name="style_ink_secondary" />
+      <style name="$tone_label" />
+    </label>
+  </view>
+</component>
