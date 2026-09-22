@@ -2,3 +2,9 @@
 	path = samples/subsys/display/ti_thermostat_full/ui
 	url = git@github.com:lvgl-services/ti-thermostat.git
 	branch = optimize/v2
+[submodule "samples/subsys/display/ui"]
+	path = samples/subsys/display/ui
+	url = git@github.com:lvgl-services/ti-motor-control.git
+[submodule "samples/subsys/display/ti_motor_control/ui"]
+	path = samples/subsys/display/ti_motor_control/ui
+	url = git@github.com:lvgl-services/ti-motor-control.git
