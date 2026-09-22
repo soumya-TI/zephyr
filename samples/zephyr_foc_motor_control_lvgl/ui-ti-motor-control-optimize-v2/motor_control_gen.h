@@ -29,11 +29,6 @@ extern "C" {
     #include "lv_xml/lv_xml.h"
 #endif
 
-/* Polyfill for lv_obj_add_subject_set_int_event /
- * lv_obj_add_subject_increment_event — added in LVGL 9.5, absent in 9.3. */
-#include "lv_subject_compat.h"
-
-
 /* Prototypes for target functions, needed by responsive const definitions */
 
 void motor_control_set_target(uint32_t target);

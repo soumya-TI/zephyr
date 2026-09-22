@@ -12,7 +12,7 @@ if(BOARD_REVISION STREQUAL "e1")
 elseif(BOARD_REVISION STREQUAL "e2")
     set(syscfg_gen_path "e2_syscfg_gen_code")
 else()
-    set(syscfg_gen_path "e1_syscfg_gen_code")
+    set(syscfg_gen_path "e2_syscfg_gen_code")
 endif()
 
 # ---------------------------------------------------------------------------
