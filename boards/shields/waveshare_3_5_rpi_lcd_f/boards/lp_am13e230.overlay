@@ -29,9 +29,9 @@
 #include <zephyr/dt-bindings/i2c/i2c.h>
 
 &waveshare_3_5_rpi_lcd_f_mipi_dbi {
-	dc-gpios    = <&gpioa 25 GPIO_ACTIVE_HIGH>;
-	reset-gpios = <&gpioa 17 GPIO_ACTIVE_LOW>;
-	spi-dev     = <&unicomm3_spi>;
+	dc-gpios    = <&gpiob 5 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&gpiob 15 GPIO_ACTIVE_LOW>;
+	spi-dev     = <&unicomm0_spi>;
 };
 
 &st7796s_display {
@@ -56,7 +56,7 @@
 };
 
 /* UNICOMM3 as SPI for ST7796S — BoosterPack standard SPI pins */
-&unicomm3 {
+&unicomm0 {
 	status = "okay";
 };
 
@@ -65,11 +65,11 @@
  * throughout the entire pixel-data burst.  PA21 is NOT muxed to the UNICOMM
  * CTS/CS0 function — it stays as a plain GPIO driven by the SPI context.
  */
-&unicomm3_spi {
+&unicomm0_spi {
 	status = "okay";
-	pinctrl-0 = <&uc3_rx_scl_sclk_pb5
-	             &uc3_tx_sda_pico_pb10
-	             &uc3_rts_poci_pa20>;
+	pinctrl-0 = <&uc0_tx_sda_pico_pa9
+	             &uc0_rx_scl_sclk_pa10
+	             &uc0_rts_poci_pa20>;
 	pinctrl-names = "default";
 	cs-gpios = <&gpioa 21 GPIO_ACTIVE_LOW>;
 	/* SPI frequency is set via mipi-max-frequency on the display node */
@@ -90,8 +90,8 @@
 		compatible = "goodix,gt911";
 		reg = <0x5d>;
 		alt-addr = <0x14>;
-		irq-gpios   = <&gpiob 11 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpioa 16 GPIO_ACTIVE_LOW>;
+		irq-gpios   = <&gpiob 10 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpiob 18 GPIO_ACTIVE_LOW>;
 		screen-width  = <320>;
 		screen-height = <480>;
 	};

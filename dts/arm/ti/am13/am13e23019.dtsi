@@ -202,6 +202,18 @@
 				clocks = <&ckm MSPM0_CLOCK_MCLK>;
 				status = "disabled";
 			};
+
+			unicomm3_i2c: unicomm3_i2c@0x40648000 {
+				compatible = "ti,unicomm-i2c";
+				reg = <0x40648000 DT_SIZE_K(4)>,
+				      <0x40650000 DT_SIZE_K(4)>;
+				reg-names = "controller", "target";
+				interrupts = <37 0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&ckm MSPM0_CLOCK_MCLK>;
+				status = "disabled";
+			};
 		};
 
 		unicomm4: unicomm4@40672000 {
