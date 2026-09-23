@@ -1,27 +1,10 @@
 /*
  * Copyright (c) 2026 Texas Instruments Incorporated
  * SPDX-License-Identifier: Apache-2.0
- *
- * Headless LVGL verification overlay for am13e230x_lp.
- *
- * Adds a zephyr,dummy-dc display node so LVGL has something to render to
- * without requiring SPI or I2C. All pixel writes go to an in-RAM buffer and
- * are never flushed to physical hardware. The display dimensions match the
- * target Waveshare 3.5" panel (320x480) so layout testing is faithful.
  */
 
 / {
 	chosen {
-		zephyr,display    = &dummy_dc;
-		/* Shell shares the console UART (unicomm4_uart for @e2 revision,
-		 * unicomm0_uart for @e1). The board overlay already enables and
-		 * pins unicomm4_uart; we just tell the shell subsystem to use it. */
 		zephyr,shell-uart = &unicomm4_uart;
-	};
-
-	dummy_dc: dummy_dc {
-		compatible = "zephyr,dummy-dc";
-		height = <480>;
-		width  = <320>;
 	};
 };

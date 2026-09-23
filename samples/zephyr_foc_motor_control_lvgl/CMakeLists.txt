@@ -1,6 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.20.0)
+
+# This sample is built for the Waveshare 3.5" RPi LCD (F) panel, which the
+# shield provides (ST7796S display + GT911 touch). Default it so a plain
+# "west build -b lp_mspm0g3519 ." works; an explicit --shield still overrides.        zephyr,display = &ssd1306; /* Must point to your active display node label */
+if(NOT DEFINED SHIELD)
+  set(SHIELD waveshare_3_5_rpi_lcd_f)
+endif()
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(zephyr_foc_motor_control_lvgl)
 
@@ -20,6 +28,7 @@ endif()
 # LV_EDITOR_PROJECT_SOURCES using ${CMAKE_CURRENT_LIST_DIR}, which resolves
 # to ui/ when included from here).
 # ---------------------------------------------------------------------------
+
 set(UI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ui-ti-motor-control-optimize-v2)
 include(${UI_DIR}/file_list_gen.cmake)
 include(${UI_DIR}/user_config.cmake)
