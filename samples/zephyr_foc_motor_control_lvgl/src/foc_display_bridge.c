@@ -75,7 +75,7 @@ void foc_display_bridge_init(void)
      * flagEnableRunAndIdentify, so a STOPPED subject immediately disables
      * the motor regardless of what main.c set at startup.
      * Set the subject to RUNNING here so the first tick enables the drive. */
-    lv_subject_set_int(&subject_state, UI_STATE_RUNNING);
+    // lv_subject_set_int(&subject_state, UI_STATE_RUNNING);
 
     printk("FOC display bridge initialised (%d ms period)\n", BRIDGE_PERIOD_MS);
 }
@@ -99,12 +99,10 @@ static void bridge_tick(lv_timer_t *timer)
     const int32_t ui_state   = lv_subject_get_int(&subject_state);
     const int32_t ui_rpm_ref = lv_subject_get_int(&subject_rpm_ref);
 
-    motorVars_M1.flagEnableRunAndIdentify =
-        (ui_state == UI_STATE_RUNNING) ? true : false;
-
     /* Convert RPM → electrical Hz: Hz = RPM / 60 * pole_pairs */
     motorVars_M1.speedRef_Hz =
-        (float)ui_rpm_ref / 60.0f * (float)POLE_PAIRS;
+        (float)((ui_rpm_ref * POLE_PAIRS)/ 60.0f );
+    printk("Motor Speed %f\n", motorVars_M1.speedRef_Hz);
 
     /* Clear-faults request: if the UI transitions from FAULT to STOPPED
      * (user tapped "Clear faults to start"), mirror that into the FOC. */
@@ -112,58 +110,64 @@ static void bridge_tick(lv_timer_t *timer)
     if (prev_ui_state == UI_STATE_FAULT && ui_state == UI_STATE_STOPPED) {
         motorVars_M1.flagClearFaults = true;
     }
+
+    motorVars_M1.flagEnableRunAndIdentify =
+        (ui_state == UI_STATE_RUNNING) ? 1 : 0;
+    
+    printk("motorVars_M1.flagEnableRunAndIdentify %d\n", motorVars_M1.flagEnableRunAndIdentify);
+
     prev_ui_state = ui_state;
 
-    /* ── Direction 2: FOC → UI ──────────────────────────────────────────────
-     *
-     * Read the measured quantities from motorVars_M1 and publish them as
-     * LVGL subjects. motor_sim_publish() marks them dirty; the widget
-     * re-render happens at the end of this lv_timer_handler() call.
-     */
+    // /* ── Direction 2: FOC → UI ──────────────────────────────────────────────
+    //  *
+    //  * Read the measured quantities from motorVars_M1 and publish them as
+    //  * LVGL subjects. motor_sim_publish() marks them dirty; the widget
+    //  * re-render happens at the end of this lv_timer_handler() call.
+    //  */
 
-    /* speed_Hz is electrical frequency. Shaft RPM = Hz / pole_pairs * 60. */
-    const int32_t rpm = (int32_t)(motorVars_M1.speed_Hz
-                                  / (float)POLE_PAIRS * 60.0f);
+    // /* speed_Hz is electrical frequency. Shaft RPM = Hz / pole_pairs * 60. */
+    // const int32_t rpm = (int32_t)(motorVars_M1.speed_Hz
+    //                               / (float)POLE_PAIRS * 60.0f);
 
-    /* Is_A is RMS phase current in amps. UI expects milliamps. */
-    const int32_t milliamps = (int32_t)(motorVars_M1.Is_A * 1000.0f);
+    // /* Is_A is RMS phase current in amps. UI expects milliamps. */
+    // const int32_t milliamps = (int32_t)(motorVars_M1.Is_A * 1000.0f);
 
-    /* torque_Nm scaled to 0–100% load. Clamp to valid range. */
-    int32_t load_pct = (int32_t)(motorVars_M1.torque_Nm
-                                 / NOMINAL_TORQUE_NM * 100.0f);
-    if (load_pct < 0)   load_pct = 0;
-    if (load_pct > 100) load_pct = 100;
+    // /* torque_Nm scaled to 0–100% load. Clamp to valid range. */
+    // int32_t load_pct = (int32_t)(motorVars_M1.torque_Nm
+    //                              / NOMINAL_TORQUE_NM * 100.0f);
+    // if (load_pct < 0)   load_pct = 0;
+    // if (load_pct > 100) load_pct = 100;
 
-    /* Temperature: placeholder until real ADC thermal channel is wired. */
-    const int32_t temp_c = 25;
+    // /* Temperature: placeholder until real ADC thermal channel is wired. */
+    // const int32_t temp_c = 25;
 
-    motor_sim_publish(rpm, milliamps, temp_c, load_pct);
+    // motor_sim_publish(rpm, milliamps, temp_c, load_pct);
 
-    /* ── FOC state → UI state ───────────────────────────────────────────────
-     *
-     * Map the FOC's detailed state machine onto the UI's three-value subject.
-     * Only write when the mapped value differs to avoid unnecessary redraws.
-     */
-    int32_t new_ui_state = ui_state; /* default: keep current */
+    // /* ── FOC state → UI state ───────────────────────────────────────────────
+    //  *
+    //  * Map the FOC's detailed state machine onto the UI's three-value subject.
+    //  * Only write when the mapped value differs to avoid unnecessary redraws.
+    //  */
+    // int32_t new_ui_state = ui_state; /* default: keep current */
 
-    if (motorVars_M1.faultMtrNow.all != 0u) {
-        new_ui_state = UI_STATE_FAULT;
-    } else if (motorVars_M1.motorState == MOTOR_CL_RUNNING ||
-               motorVars_M1.motorState == MOTOR_CTRL_RUN   ||
-               motorVars_M1.motorState == MOTOR_FWC_RUN) {
-        new_ui_state = UI_STATE_RUNNING;
-    } else if (motorVars_M1.motorState == MOTOR_STOP_IDLE  ||
-               motorVars_M1.motorState == MOTOR_NORM_STOP  ||
-               motorVars_M1.motorState == MOTOR_BRAKE_STOP ||
-               motorVars_M1.motorState == MOTOR_FAULT_STOP) {
-        new_ui_state = UI_STATE_STOPPED;
-    }
+    // if (motorVars_M1.faultMtrNow.all != 0u) {
+    //     new_ui_state = UI_STATE_FAULT;
+    // } else if (motorVars_M1.motorState == MOTOR_CL_RUNNING ||
+    //            motorVars_M1.motorState == MOTOR_CTRL_RUN   ||
+    //            motorVars_M1.motorState == MOTOR_FWC_RUN) {
+    //     new_ui_state = UI_STATE_RUNNING;
+    // } else if (motorVars_M1.motorState == MOTOR_STOP_IDLE  ||
+    //            motorVars_M1.motorState == MOTOR_NORM_STOP  ||
+    //            motorVars_M1.motorState == MOTOR_BRAKE_STOP ||
+    //            motorVars_M1.motorState == MOTOR_FAULT_STOP) {
+    //     new_ui_state = UI_STATE_STOPPED;
+    // }
 
-    if (new_ui_state != ui_state) {
-        lv_subject_set_int(&subject_state, new_ui_state);
-        if (new_ui_state == UI_STATE_FAULT) {
-            motor_sim_trip();
-        }
+    // if (new_ui_state != ui_state) {
+    //     lv_subject_set_int(&subject_state, new_ui_state);
+    //     if (new_ui_state == UI_STATE_FAULT) {
+    //         motor_sim_trip();
+    //     }
     }
 
     /* ── 1 Hz verification log ──────────────────────────────────────────────
@@ -173,11 +177,11 @@ static void bridge_tick(lv_timer_t *timer)
      * blocks the LVGL thread — it enqueues the message and the log thread
      * (priority 10) drains it when nothing else is runnable.
      */
-    if (++log_div >= LOG_DIVIDER) {
-        log_div = 0;
-        printk("rpm=%4d  mA=%5d  load=%3d%%  foc_state=%2d  fault=0x%04x\n",
-                rpm, milliamps, load_pct,
-                (int)motorVars_M1.motorState,
-                (unsigned)motorVars_M1.faultMtrNow.all);
-    }
-}
+    // if (++log_div >= LOG_DIVIDER) {
+    //     log_div = 0;
+    //     printk("rpm=%4d  mA=%5d  load=%3d%%  foc_state=%2d  fault=0x%04x\n",
+    //             rpm, milliamps, load_pct,
+    //             (int)motorVars_M1.motorState,
+    //             (unsigned)motorVars_M1.faultMtrNow.all);
+    // }
+

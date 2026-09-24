@@ -182,7 +182,9 @@ static void lvgl_thread(void *arg1, void *arg2, void *arg3)
  * correct at 1 ms but does not need the 50 µs ISR cadence.
  * ---------------------------------------------------------------------------*/
 int main(void)
-{
+{   
+    // uint32_t i =1;
+    // while(i==1);
     printk("reached main loop\n");
     /* Enable TMU and FPU (Cortex-M33 CPACR: co-processors 0 and 10/11). */
     // SCB->CPACR = 0x00300003;
@@ -323,26 +325,26 @@ int main(void)
     initDACOutputs(&systemVars, (MOTOR_Handle)&motorVars_M1);
 
     IRQ_CONNECT(8, 0, ADC0_INT1_IRQHandler, NULL, 0);
-    irq_enable(8);
+    // irq_enable(8);
 
-    /* Auto-start: set the speed reference and enable the drive immediately.
-    * The low-priority state machine will sequence through alignment and
-     * open-loop start before entering closed-loop control.
-     * Default: 60 Hz electrical = 60/4*60 = 900 RPM shaft for a 4-pole-pair
-     * motor. Adjust USER_MOTOR1_NUM_POLE_PAIRS in user_mtr1.h if needed. */
-    motorVars_M1.speedRef_Hz             = 300.0f;
-    motorVars_M1.flagClearFaults         = true;
-    motorVars_M1.flagEnableRunAndIdentify = true;
+    // /* Auto-start: set the speed reference and enable the drive immediately.
+    // * The low-priority state machine will sequence through alignment and
+    //  * open-loop start before entering closed-loop control.
+    //  * Default: 60 Hz electrical = 60/4*60 = 900 RPM shaft for a 4-pole-pair
+    //  * motor. Adjust USER_MOTOR1_NUM_POLE_PAIRS in user_mtr1.h if needed. */
+    // motorVars_M1.speedRef_Hz             = 300.0f;
+    // motorVars_M1.flagClearFaults         = true;
+    // motorVars_M1.flagEnableRunAndIdentify = true;
 
 
     printk("FOC Motor Control + LVGL starting\n");
 
     /* Launch do_foc thread (priority 0, FPU registers saved on context switch). */
-    // k_tid_t foc_tid = k_thread_create(&foc_thread,
-    //     do_foc_stack, FOC_THREAD_STACK_SIZE,
-    //     do_foc, NULL, NULL, NULL,
-    //     0, K_FP_REGS, K_USEC(50));
-    // k_thread_name_set(foc_tid, "do_foc");
+    k_tid_t foc_tid = k_thread_create(&foc_thread,
+        do_foc_stack, FOC_THREAD_STACK_SIZE,
+        do_foc, NULL, NULL, NULL,
+        0, K_FP_REGS, K_USEC(50));
+    k_thread_name_set(foc_tid, "do_foc");
 
     // // k_tid_t low_prio_foc_tid = k_thread_create(&low_prio_foc_thread,
     // //     low_prio_do_foc_stack, LOW_PRIO_FOC_THREAD_STACK_SIZE,
@@ -388,43 +390,43 @@ int main(void)
 
 
 
-    // while (1) {
+    while (1) {
 
-    //     // HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-    //     //                 MTR1_FOC_CTRL_ISR_TIMING_PIN);
+        // HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+        //                 MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
-    //     uint32_t sleep_ms = lv_timer_handler();
+        uint32_t sleep_ms = lv_timer_handler();
 
-    //     if (sleep_ms == LV_NO_TIMER_READY) {
-    //         sleep_ms = LV_DEF_REFR_PERIOD;
-    //     }
-    //     // HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-    //     //                MTR1_FOC_CTRL_ISR_TIMING_PIN);
+        if (sleep_ms == LV_NO_TIMER_READY) {
+            sleep_ms = LV_DEF_REFR_PERIOD;
+        }
+        // HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+        //                MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
-    //     uint32_t wallClockMs = 0;
+        uint32_t wallClockMs = 0;
 
-    //     if (systemVars.flagEnableSystem == true) {
+        if (systemVars.flagEnableSystem == true) {
 
-    //         HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-    //                         MTR1_FOC_CTRL_ISR_TIMING_PIN);
+            HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+                            MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
-    //         wallClockMs++;
+            wallClockMs++;
 
-    //         if (systemVars.timerCntFOCCtrlISR > LOW_PRIORITY_WAIT_TIME_1ms) {
-    //             systemVars.timerCntFOCCtrlISR = 0;
-    //             wallClockMs = 0;
-    //             FOC_runLowPriorityStateMachine(&motorVars_M1);
-    //         } else if (wallClockMs >= 10u) {
-    //             wallClockMs = 0;
-    //             FOC_runLowPriorityStateMachine(&motorVars_M1);
-    //         }
-    //         HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-    //                     MTR1_FOC_CTRL_ISR_TIMING_PIN);
+            if (systemVars.timerCntFOCCtrlISR > LOW_PRIORITY_WAIT_TIME_1ms) {
+                systemVars.timerCntFOCCtrlISR = 0;
+                wallClockMs = 0;
+                FOC_runLowPriorityStateMachine(&motorVars_M1);
+            } else if (wallClockMs >= 10u) {
+                wallClockMs = 0;
+                FOC_runLowPriorityStateMachine(&motorVars_M1);
+            }
+            HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+                        MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
-    //     }
+        }
 
-    //     k_sleep(K_MSEC(sleep_ms));
-    // }
+        k_sleep(K_MSEC(sleep_ms));
+    }
 
     while (1) {
         uint32_t sleep_ms = lv_timer_handler();
