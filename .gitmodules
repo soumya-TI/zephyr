@@ -1,0 +1,3 @@
+[submodule "samples/subsys/display/ti_washing_machine-old/ui"]
+	path = samples/subsys/display/ti_washing_machine-old/ui
+	url = git@github.com:lvgl-services/ti-washing-machine.git
