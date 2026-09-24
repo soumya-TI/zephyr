@@ -40,9 +40,7 @@ int main(void)
 
 	/* Initialize sensor monitor AFTER ti_thermostat_init (subjects created) */
 	sensor_monitor_init();
-	
-	lv_screen_load(home);
-	
+
 	/* Render one frame, then enable the panel. */
 	lv_timer_handler();
 	ret = display_blanking_off(display_dev);
