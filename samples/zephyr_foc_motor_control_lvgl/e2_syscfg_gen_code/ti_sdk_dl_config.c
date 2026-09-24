@@ -64,8 +64,8 @@ void SYSCFG_DL_init(void)
 
 void SYSCFG_DL_initPower(void)
 {
-    DL_GPIO_reset(GPIO0);
-    DL_GPIO_reset(GPIO1);
+    // DL_GPIO_reset(GPIO0);
+    // DL_GPIO_reset(GPIO1);
     DL_GPIO_reset(GPIO2);
     DL_GPIO_reset(GPIO3);
 

@@ -517,7 +517,7 @@ void application_run(MOTOR_Handle motorHandle)
     // ========================================================================
     // SECTION 5: DATA LOGGING - Diagnostics and Monitoring
     // ========================================================================
-    FOC_runDataLogging(obj);
+    // FOC_runDataLogging(obj);
 }
 
 /**

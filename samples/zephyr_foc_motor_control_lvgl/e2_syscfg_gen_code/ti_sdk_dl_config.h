@@ -115,8 +115,8 @@ delayed. Please refer to the function documentation for more details.
 /* Defines for ISR_TIMING: GPIO0.23 with pinCMx PA23 on package pin 60 */
 #define MTR1_FOC_CTRL_ISR_TIMING_PORT                                    (GPIO0)
 #define MTR1_FOC_CTRL_ISR_TIMING_PORT_BASE                          (GPIO0_BASE)
-#define MTR1_FOC_CTRL_ISR_TIMING_PIN                           (DL_GPIO_PIN(23))
-#define MTR1_FOC_CTRL_ISR_TIMING_IOMUX                        (IOMUX_PINCM_PA23)
+#define MTR1_FOC_CTRL_ISR_TIMING_PIN                           (DL_GPIO_PIN(24))
+#define MTR1_FOC_CTRL_ISR_TIMING_IOMUX                        (IOMUX_PINCM_PA24)
 
 
 /* Defines for MTR1_STOP_ACTION */

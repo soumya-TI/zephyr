@@ -29,7 +29,7 @@ endif()
 # to ui/ when included from here).
 # ---------------------------------------------------------------------------
 
-set(UI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ui-ti-motor-control-optimize-v2)
+set(UI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ui-v3)
 include(${UI_DIR}/file_list_gen.cmake)
 include(${UI_DIR}/user_config.cmake)
 
@@ -135,7 +135,7 @@ target_sources(app PRIVATE
     isr.c
 
     # Shell commands
-    shell_commands/cmd_motor.c
+    # shell_commands/cmd_motor.c
 
     # LVGL UI (generated + custom, excluding motor_sim.c — replaced by bridge)
     ${LV_EDITOR_PROJECT_SOURCES}
