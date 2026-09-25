@@ -49,7 +49,7 @@
 
 		/* Door reed switch / momentary button; verify polarity against board schematic */
 		door_btn: door_btn {
-			gpios = <&gpioc 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpioa 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 			label = "Door Switch";
 			zephyr,code = <INPUT_KEY_1>;
 			status = "okay";

@@ -27,7 +27,7 @@
 			 * while 40MHz hits SCR=0 = the 40MHz hardware max, i.e.
 			 * double the pixel throughput. The panel/ST7796S handle it.
 			 */
-			mipi-max-frequency = <20000000>;
+			mipi-max-frequency = <40000000>;
 			invert-mode = "1-dot";
 			color-invert;
 			/*
