@@ -84,12 +84,12 @@ static void gpio_keys_poll_pin(const struct device *dev, int key_index)
 		pin_data->cb_data.pin_state, new_pressed, key_index);
 
 	/* If gpio changed, report the event */
-	if (new_pressed != pin_data->cb_data.pin_state) {
+	// if (new_pressed != pin_data->cb_data.pin_state) {
 		// pin_data->cb_data.pin_state = new_pressed;
 		LOG_DBG("Report event %s %d, code=%d", dev->name, new_pressed,
 			pin_cfg->zephyr_code);
 		input_report_key(dev, pin_cfg->zephyr_code, new_pressed, true, K_FOREVER);
-	}
+	// }  
 }
 
 static __maybe_unused void gpio_keys_poll_pins(struct k_work *work)
@@ -165,8 +165,6 @@ static int gpio_keys_interrupt_configure(const struct gpio_dt_spec *gpio_spec,
 
 	cb->pin_state = gpio_pin_get_dt(gpio_spec);
 
-	printk("port=%s, pin=%d\n", gpio_spec->port->name, gpio_spec->pin);
-
 	ret = gpio_pin_interrupt_configure_dt(gpio_spec, GPIO_INT_EDGE_RISING);
 	if (ret < 0) {
 		LOG_ERR("interrupt configuration failed: %d", ret);
@@ -178,7 +176,7 @@ static int gpio_keys_interrupt_configure(const struct gpio_dt_spec *gpio_spec,
 
 static int gpio_keys_init(const struct device *dev)
 {
-	printk("gpio_keys_init: %s\n", dev->name);
+
 	const struct gpio_keys_config *cfg = dev->config;
 	struct gpio_keys_pin_data *pin_data = cfg->pin_data;
 	int ret;
@@ -224,7 +222,6 @@ static int gpio_keys_init(const struct device *dev)
 
 		return ret;
 	}
-	printk("gpio_keys initialized on %s\n", dev->name);
 
 	return 0;
 }

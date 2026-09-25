@@ -33,17 +33,14 @@
 
 / {
 	chosen {
-		zephyr,shell-uart = &unicomm12_uart;	};
+		zephyr,shell-uart = &unicomm12_uart;
+	};
 };
 
 &st7796s_display {
 	madctl = <0xE8>;
 };
 
-/* &gt911_touch {
-	screen-width  = <480>;
-	screen-height = <320>;
-}; */
 
 / {
 	buttons: buttons {
@@ -60,19 +57,19 @@
 	};
 };
 
-&unicomm1_0_i2c {
-	status = "disabled";
-	pinctrl-0 = <&uc1_0_sda_pa0 &uc1_0_scl_pa1>;
-	pinctrl-names = "default";
+// &unicomm13_0 {
+// 	status = "okay";
+// };
 
-	apds9960: apds9960@39 {
-		compatible = "avago,apds9960";
-		status = "disabled";
-		reg = <0x39>;
-	};
-};
+// &unicomm13_0_i2c {
+// 	status = "okay";
+// 	pinctrl-0 = <&uc13_0_sda_pb12 &uc13_0_scl_pb13>;
+// 	pinctrl-names = "default";
 
-/* &lvgl_pointer {
-	invert-x;
-	invert-y;
-}; */
+// 	light: opt3001-light@44 {
+// 		status = "okay";
+// 		compatible = "ti,opt3001";
+// 		reg = <0x44>;
+// 		int-gpios = <&gpioa 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+// 	};
+// };

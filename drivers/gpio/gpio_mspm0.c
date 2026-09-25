@@ -147,7 +147,7 @@ static int gpio_mspm0_pin_configure(const struct device *port,
 	/* Config pin based on flags */
 	switch (flags & (GPIO_INPUT | GPIO_OUTPUT)) {
 	case GPIO_INPUT:
-		printk("INPUT\n");
+
 		p.iomux |= BIT(MSP_GPIO_INPUT_ENABLE);
 
 		if (flags & GPIO_INT_WAKEUP) {
@@ -166,7 +166,7 @@ static int gpio_mspm0_pin_configure(const struct device *port,
 		break;
 
 	case GPIO_OUTPUT:
-		printk("OUTPUT\n");
+
 		if (flags & GPIO_OPEN_DRAIN) {
 			p.iomux |= BIT(MSP_GPIO_OPEN_DRAIN_OUTPUT);
 		}
@@ -192,7 +192,6 @@ static int gpio_mspm0_pin_configure(const struct device *port,
 		break;
 
 	case GPIO_DISCONNECTED:
-		printk("DISCONNECTED\n");
 		if (pinctrl_configure_pins(&p, 1, PINCTRL_REG_NONE) < 0) {
 			return -EINVAL;
 		}
@@ -200,7 +199,6 @@ static int gpio_mspm0_pin_configure(const struct device *port,
 		break;
 
 	default:
-		printk("ENOTSUP\n");
 		return -ENOTSUP;
 	}
 
@@ -237,8 +235,6 @@ static int gpio_mspm0_pin_interrupt_configure(const struct device *port,
 			polarity |= BIT(0);
 		}
 
-		printk("Polarity: %d\n", polarity);
-
 		if (pin < MSPM0_PINS_LOW_GROUP) {
 			pol_reg = config->base + GPIO_POLARITY15_0;
 			pol_shift = 2 * pin;
@@ -249,7 +245,6 @@ static int gpio_mspm0_pin_interrupt_configure(const struct device *port,
 
 		pol_val = sys_read32(pol_reg) & ~(0x3U << pol_shift);
 		sys_write32(pol_val | (polarity << pol_shift), pol_reg);
-		printk("Pol_reg: 0x%x\n", sys_read32(pol_reg));
 
 		sys_write32(BIT(pin), config->base + GPIO_ICLR);
 		sys_write32(sys_read32(config->base + GPIO_IMASK) | BIT(pin),
@@ -288,8 +283,6 @@ static void gpio_mspm0_isr(const struct device *port)
 			DEVICE_DT_GET_OR_NULL(GPIOC_NODE),
 	};
 
-	printk("Reaching\n");
-
 	for (uint8_t i = 0; i < ARRAY_SIZE(dev_list); i++) {
 		uint32_t status;
 
@@ -299,8 +292,6 @@ static void gpio_mspm0_isr(const struct device *port)
 
 		data = dev_list[i]->data;
 		config = dev_list[i]->config;
-
-		printk("Reaching 2\n");
 
 		status = sys_read32(config->base + GPIO_MIS);
 

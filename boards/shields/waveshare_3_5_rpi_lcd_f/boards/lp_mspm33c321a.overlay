@@ -7,8 +7,8 @@
 #include <zephyr/dt-bindings/i2c/i2c.h>
 
 &waveshare_3_5_rpi_lcd_f_mipi_dbi {
-	dc-gpios    = <&gpioa 22 GPIO_ACTIVE_HIGH>;
-	reset-gpios = <&gpioa 21 GPIO_ACTIVE_LOW>;
+	dc-gpios    = <&gpioa 25 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&gpiob 26 GPIO_ACTIVE_LOW>;
 	spi-dev     = <&unicomm2_spi>;
 };
 
@@ -51,8 +51,8 @@
 		compatible = "goodix,gt911";
 		reg = <0x5d>;
 		alt-addr = <0x14>;
-		irq-gpios   = <&gpioc 29 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpiob 30 GPIO_ACTIVE_LOW>;
+		irq-gpios   = <&gpiob 20 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpiob 21 GPIO_ACTIVE_LOW>;
 		screen-width  = <320>;
 		screen-height = <480>;
 		status = "okay";

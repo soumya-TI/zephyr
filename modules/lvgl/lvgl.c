@@ -417,7 +417,7 @@ int lvgl_init(void)
 
 	k_work_submit_to_queue(&lvgl_workqueue, &lvgl_work.work);
 #endif
-	printk("LVGL initialized\n");
+
 	return 0;
 }
 

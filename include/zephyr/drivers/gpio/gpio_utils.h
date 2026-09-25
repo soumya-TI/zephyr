@@ -131,7 +131,6 @@ static inline void gpio_fire_callbacks(sys_slist_t *list,
 	struct gpio_callback *cb, *tmp;
 
 	sys_port_trace_gpio_fire_callbacks_enter(list, port, pins);
-	printk("Callbacks: %d\n", sys_slist_len(list));
 
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(list, cb, tmp, node) {
 		if (cb->pin_mask & pins) {

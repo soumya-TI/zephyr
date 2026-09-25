@@ -348,7 +348,6 @@ static int st7796s_pm_action(const struct device *dev, enum pm_device_action act
 	const struct st7796s_config *config = dev->config;
 	int ret;
 	uint8_t param;
-	printk("Getting called with action: %d\n", action);
 
 	switch (action) {
 	case PM_DEVICE_ACTION_TURN_ON:
@@ -438,7 +437,7 @@ static int st7796s_pm_action(const struct device *dev, enum pm_device_action act
 
 static int st7796s_init(const struct device *dev)
 {
-	printk("Init getting called?\n");
+
 	return pm_device_driver_init(dev, st7796s_pm_action);
 }
 

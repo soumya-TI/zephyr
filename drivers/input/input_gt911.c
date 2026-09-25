@@ -289,7 +289,7 @@ static void gt911_pm_state_exit(const struct device *dev, enum pm_state state)
 
 static int gt911_init(const struct device *dev)
 {
-	printk("GT911 init: %s\n", dev->name);
+
 	const struct gt911_config *config = dev->config;
 	struct gt911_data *data = dev->data;
 
@@ -385,7 +385,7 @@ static int gt911_init(const struct device *dev)
 		//  volatile uint32_t loop = 0xdead;
 		//  while(loop == 0xdead);
 		r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), &reg_id, sizeof(reg_id));
-		printk("Return state 1: %d\n", r);
+
 		if (r < 0) {
 			/* Try alternate address */
 			data->actual_address = config->alt_addr;
@@ -397,7 +397,7 @@ static int gt911_init(const struct device *dev)
 		}
 	} else {
 		r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), &reg_id, sizeof(reg_id));
-		printk("Return state 2: %d\n", r);
+
 	}
 	if (r < 0) {
 		LOG_ERR("Device did not respond to I2C request");
@@ -423,7 +423,7 @@ static int gt911_init(const struct device *dev)
 	reg_addr = GT911_REG_CONFIG;
 	r = gt911_i2c_write_read(dev, &reg_addr, sizeof(reg_addr), gt911_config_firmware + 2,
 				 GT911_REG_CONFIG_SIZE);
-	printk("Return state 3: %d\n", r);
+
 	if (r < 0) {
 		return r;
 	}
@@ -439,7 +439,7 @@ static int gt911_init(const struct device *dev)
 	gt911_config_firmware[GT911_REG_CONFIG_SIZE + 1] = 1;
 
 	r = gt911_i2c_write(dev, gt911_config_firmware, sizeof(gt911_config_firmware));
-	printk("Return state 4: %d\n", r);
+
 	if (r < 0) {
 		return r;
 	}

@@ -650,7 +650,6 @@ static int mipi_dbi_spi_configure_te(const struct device *dev,
 
 static int mipi_dbi_spi_init(const struct device *dev)
 {
-	printk("mipi_dbi_spi_init: %s\n", dev->name);
 	const struct mipi_dbi_spi_config *config = dev->config;
 	struct mipi_dbi_spi_data *data = dev->data;
 	int ret;
@@ -676,7 +675,6 @@ static int mipi_dbi_spi_init(const struct device *dev)
 			return -ENODEV;
 		}
 		ret = gpio_pin_configure_dt(&config->reset, GPIO_OUTPUT_INACTIVE);
-		printk("mipi_dbi_spi_init: reset pin configured, ret: %d\n", ret);
 		if (ret < 0) {
 			LOG_ERR("Could not configure reset GPIO (%d)", ret);
 			return ret;
@@ -684,8 +682,6 @@ static int mipi_dbi_spi_init(const struct device *dev)
 	}
 
 	k_mutex_init(&data->lock);
-
-	printk("MIPI DBI SPI driver initialized for %s\n", dev->name);
 
 	return 0;
 }
