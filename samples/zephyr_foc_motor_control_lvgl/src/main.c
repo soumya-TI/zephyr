@@ -88,41 +88,41 @@ static void do_foc(void *arg1, void *arg2, void *arg3)
 /* ---------------------------------------------------------------------------
  * low_prio_do_foc thread — priority 2
  * ---------------------------------------------------------------------------*/
-#define LOW_PRIO_FOC_THREAD_STACK_SIZE  4096
-K_THREAD_STACK_DEFINE(low_prio_do_foc_stack, LOW_PRIO_FOC_THREAD_STACK_SIZE);
-static struct k_thread low_prio_foc_thread;
+// #define LOW_PRIO_FOC_THREAD_STACK_SIZE  4096
+// K_THREAD_STACK_DEFINE(low_prio_do_foc_stack, LOW_PRIO_FOC_THREAD_STACK_SIZE);
+// static struct k_thread low_prio_foc_thread;
 
-static void low_prio_do_foc(void *arg1, void *arg2, void *arg3)
-{
-    ARG_UNUSED(arg1);
-    ARG_UNUSED(arg2);
-    ARG_UNUSED(arg3);
+// static void low_prio_do_foc(void *arg1, void *arg2, void *arg3)
+// {
+//     ARG_UNUSED(arg1);
+//     ARG_UNUSED(arg2);
+//     ARG_UNUSED(arg3);
 
-    uint32_t wallClockMs = 0;
+//     uint32_t wallClockMs = 0;
 
-    while (systemVars.flagEnableSystem == true) {
+//     while (systemVars.flagEnableSystem == true) {
 
-        k_sleep(K_MSEC(1));
-        wallClockMs++;
+//         k_sleep(K_MSEC(1));
+//         wallClockMs++;
 
-        HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-                        MTR1_FOC_CTRL_ISR_TIMING_PIN);
+//         HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+//                         MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
-        if (systemVars.timerCntFOCCtrlISR > LOW_PRIORITY_WAIT_TIME_1ms) {
-            systemVars.timerCntFOCCtrlISR = 0;
-            wallClockMs = 0;
-            FOC_runLowPriorityStateMachine(&motorVars_M1);
-        } else if (wallClockMs >= 10u) {
-            wallClockMs = 0;
-            FOC_runLowPriorityStateMachine(&motorVars_M1);
-        }
+//         if (systemVars.timerCntFOCCtrlISR > LOW_PRIORITY_WAIT_TIME_1ms) {
+//             systemVars.timerCntFOCCtrlISR = 0;
+//             wallClockMs = 0;
+//             FOC_runLowPriorityStateMachine(&motorVars_M1);
+//         } else if (wallClockMs >= 10u) {
+//             wallClockMs = 0;
+//             FOC_runLowPriorityStateMachine(&motorVars_M1);
+//         }
 
-        HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-                       MTR1_FOC_CTRL_ISR_TIMING_PIN);
+//         HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+//                        MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
-    }  
+//     }  
 
-}
+// }
 
 /* ---------------------------------------------------------------------------
  * LVGL thread — priority 5, sleeps between lv_timer_handler() calls
@@ -131,48 +131,48 @@ static void low_prio_do_foc(void *arg1, void *arg2, void *arg3)
  * The bridge timer (inside lv_timer_handler) fires every 100 ms and
  * synchronises motorVars_M1 ↔ LVGL subjects in both directions.
  * ---------------------------------------------------------------------------*/
-#define LVGL_THREAD_STACK_SIZE 8096
-K_THREAD_STACK_DEFINE(lvgl_stack, LVGL_THREAD_STACK_SIZE);
-static struct k_thread lvgl_thread_data;
+// #define LVGL_THREAD_STACK_SIZE 8096
+// K_THREAD_STACK_DEFINE(lvgl_stack, LVGL_THREAD_STACK_SIZE);
+// static struct k_thread lvgl_thread_data;
 
-static void lvgl_thread(void *arg1, void *arg2, void *arg3)
-{
-    ARG_UNUSED(arg1);
-    ARG_UNUSED(arg2);
-    ARG_UNUSED(arg3);
+// static void lvgl_thread(void *arg1, void *arg2, void *arg3)
+// {
+//     ARG_UNUSED(arg1);
+//     ARG_UNUSED(arg2);
+//     ARG_UNUSED(arg3);
 
-    const struct device *display_dev =
-        DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+//     const struct device *display_dev =
+//         DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 
-    if (!device_is_ready(display_dev)) {
-        printk("Display device not ready — LVGL will not run\n");
-        return;
-    }
+//     if (!device_is_ready(display_dev)) {
+//         printk("Display device not ready — LVGL will not run\n");
+//         return;
+//     }
 
-    /* Build every subject, register every observer, load the run screen. */
-    motor_control_init("A:");
+//     /* Build every subject, register every observer, load the run screen. */
+//     motor_control_init("A:");
 
-    printk("LVGL UI init OK — entering render loop\n");
+//     printk("LVGL UI init OK — entering render loop\n");
 
-    /* Render the first frame before turning the display on. */
-    lv_timer_handler();
+//     /* Render the first frame before turning the display on. */
+//     lv_timer_handler();
 
-    int ret = display_blanking_off(display_dev);
-    if (ret < 0 && ret != -ENOSYS) {
-        /* -ENOSYS is expected for the dummy display backend. Any other error
-         * is real and worth logging, but not fatal for verification. */
-        printk("display_blanking_off returned %d\n", ret);
-    }
+//     int ret = display_blanking_off(display_dev);
+//     if (ret < 0 && ret != -ENOSYS) {
+//         /* -ENOSYS is expected for the dummy display backend. Any other error
+//          * is real and worth logging, but not fatal for verification. */
+//         printk("display_blanking_off returned %d\n", ret);
+//     }
 
-    while (1) {
-        uint32_t sleep_ms = lv_timer_handler();
+//     while (1) {
+//         uint32_t sleep_ms = lv_timer_handler();
 
-        if (sleep_ms == LV_NO_TIMER_READY) {
-            sleep_ms = LV_DEF_REFR_PERIOD;
-        }
-        k_sleep(K_MSEC(sleep_ms));
-    }
-}
+//         if (sleep_ms == LV_NO_TIMER_READY) {
+//             sleep_ms = LV_DEF_REFR_PERIOD;
+//         }
+//         k_sleep(K_MSEC(sleep_ms));
+//     }
+// }
 
 /* ---------------------------------------------------------------------------
  * main() — FOC low-priority state machine, priority 0, ~1 ms cadence
@@ -392,23 +392,18 @@ int main(void)
 
     while (1) {
 
-        // HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-        //                 MTR1_FOC_CTRL_ISR_TIMING_PIN);
+        HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+                        MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
         uint32_t sleep_ms = lv_timer_handler();
 
         if (sleep_ms == LV_NO_TIMER_READY) {
             sleep_ms = LV_DEF_REFR_PERIOD;
         }
-        // HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-        //                MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
         uint32_t wallClockMs = 0;
 
         if (systemVars.flagEnableSystem == true) {
-
-            HAL_setGPIOHigh((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-                            MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
             wallClockMs++;
 
@@ -420,10 +415,10 @@ int main(void)
                 wallClockMs = 0;
                 FOC_runLowPriorityStateMachine(&motorVars_M1);
             }
-            HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
-                        MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
         }
+        HAL_setGPIOLow((uint32_t)MTR1_FOC_CTRL_ISR_TIMING_PORT,
+                       MTR1_FOC_CTRL_ISR_TIMING_PIN);
 
         k_sleep(K_MSEC(sleep_ms));
     }
