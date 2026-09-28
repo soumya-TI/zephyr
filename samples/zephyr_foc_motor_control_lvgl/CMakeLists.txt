@@ -29,7 +29,7 @@ endif()
 # to ui/ when included from here).
 # ---------------------------------------------------------------------------
 
-set(UI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ui-v3)
+set(UI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ui)
 include(${UI_DIR}/file_list_gen.cmake)
 include(${UI_DIR}/user_config.cmake)
 

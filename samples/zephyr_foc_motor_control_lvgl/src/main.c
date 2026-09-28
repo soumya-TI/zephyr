@@ -30,6 +30,7 @@
 
 #include "motor_control.h"
 #include "ti_sdk_dl_config.h"
+#include "foc_display_bridge.h"
 
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/printk.h>
@@ -104,6 +105,7 @@ int main(void)
 
     // /* Build every subject, register every observer, load the run screen. */
     motor_control_init("A:");
+    foc_display_bridge_init();
 
     printk("LVGL UI init OK — entering render loop\n");
 

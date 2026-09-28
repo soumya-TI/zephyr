@@ -92,20 +92,41 @@ static void bridge_tick(lv_timer_t *timer);
  * Public API
  * ---------------------------------------------------------------------------*/
 
+ /** Moves `value` toward `target` by at most `step`, without overshooting. */
+static int32_t approach(int32_t value, int32_t target, int32_t step)
+{
+    if(value < target) {
+        value += step;
+        if(value > target) value = target;
+    }
+    else if(value > target) {
+        value -= step;
+        if(value < target) value = target;
+    }
+    return value;
+}
+
+/**
+ * Renders thousandths as a one-decimal string: 2400 -> "2.4".
+ *
+ * This exists because bind_text-fmt has no fixed-point conversion - it forwards
+ * to lv_label_set_text_fmt, which on an embedded build has no float support at
+ * all. Every decimal in this UI is a pre-formatted string subject for that
+ * reason, not because the value is genuinely textual.
+ */
+static void format_milliamps(char * buf, size_t len, int32_t ma)
+{
+    if(ma < 0) ma = 0;
+    lv_snprintf(buf, len, "%d.%d", (int)(ma / 1000), (int)((ma % 1000) / 100));
+}
+
+
 void foc_display_bridge_init(void)
 {
     /* No motor_digits_init() call here. The optimized UI binds subject_rpm_act
      * directly to a label with lv_label_bind_text(..., "%04d") — the old
      * roller-based odometer and its digit-decomposition helper are gone. */
     lv_timer_create(bridge_tick, BRIDGE_PERIOD_MS, NULL);
-
-    /* motor_control_init_gen() initialises subject_state to 0 (STOPPED).
-     * The bridge tick reads this every 100 ms and writes it to
-     * flagEnableRunAndIdentify, so a STOPPED subject immediately disables
-     * the motor regardless of what main.c set at startup.
-     * Set the subject to RUNNING here so the first tick enables the drive. */
-    // lv_subject_set_int(&subject_state, UI_STATE_RUNNING);
-
     printk("FOC display bridge initialised (%d ms period)\n", BRIDGE_PERIOD_MS);
 }
 
@@ -130,11 +151,9 @@ static void bridge_tick(lv_timer_t *timer)
 
     int32_t ui_state   = lv_subject_get_int(&subject_state);
     int32_t ui_rpm_ref = lv_subject_get_int(&subject_rpm_ref);
-    int32_t ui_rpm_act   = lv_subject_get_int(&subject_rpm_act);
-
-
-
-
+    int32_t ui_rpm_act;
+    static int32_t setrpm;
+    
     /* ── Speed ────────────────────────────────────────────────────────────
      * Running chases the reference; anything else coasts to rest. Soft start
      * is what the ramp models - with it off the drive steps straight to the
@@ -143,96 +162,74 @@ static void bridge_tick(lv_timer_t *timer)
         if(lv_subject_get_int(&subject_cfg_softstart)) {
             int32_t step = lv_subject_get_int(&subject_ramp) * RAMP_PER_UNIT;
             if(step < RAMP_PER_UNIT) step = RAMP_PER_UNIT;
-            ui_rpm_act = approach(ui_rpm_act, ui_rpm_ref, step);
+            setrpm = approach(ui_rpm_act, ui_rpm_ref, step);
         }
         else {
-            ui_rpm_act = ui_rpm_ref;
+            setrpm = ui_rpm_ref;
         }
         run_ticks++;
+        
+        if(lv_subject_get_int(&subject_cfg_reverse) == 1)
+        {
+            if(lv_subject_get_int(&subject_dir) == 0){
+                motorVars_M1.speedRef_Hz =
+                    (float)((setrpm * POLE_PAIRS)/ 60.0f );
+            }
+            else {
+                motorVars_M1.speedRef_Hz =
+                    -(float)((setrpm * POLE_PAIRS)/ 60.0f );
+            }
+        }
+        else
+        {
+            motorVars_M1.speedRef_Hz =
+                    (float)((setrpm * POLE_PAIRS)/ 60.0f );
+        }
+        
+        if(motorVars_M1.flagEnableRunAndIdentify != 1)
+        {
+            motorVars_M1.flagClearFaults = 1;
+            motorVars_M1.flagEnableRunAndIdentify =
+                        (ui_state == UI_STATE_RUNNING) ? 1 : 0;
+        }
+        else
+        {   
+            if (motorVars_M1.faultMtrNow.all != 0)
+            {
+                lv_subject_set_int(&subject_fault_active, 1);
+                lv_subject_set_int(&subject_fault_count, 1);
+                lv_subject_set_int(&subject_state, UI_STATE_FAULT);
+                motorVars_M1.flagEnableRunAndIdentify = 0;
+                
+                ui_rpm_act = (float)((motorVars_M1.speed_Hz * 60.0f)/ POLE_PAIRS);
+                lv_subject_set_int(&subject_rpm_act, ui_rpm_act);
+                
+            }
+            else
+            {
+                ui_rpm_act = (float)((motorVars_M1.speed_Hz * 60.0f)/ POLE_PAIRS);
+                lv_subject_set_int(&subject_rpm_act, ui_rpm_act);
+            }
+        }
+
     }
     else {
-        ui_rpm_act = approach(ui_rpm_act, 0, COAST_PER_TICK);
-    }
-
-
-
-    /* Convert RPM → electrical Hz: Hz = RPM / 60 * pole_pairs */
-    int32_t ui_direction = lv_subject_get_int(&subject_dir);
-
-    uint32_t reversal_allowed = lv_subject_get_int(&subject_cfg_reverse);
-
-    if (reversal_allowed == 0){
-        static int32_t direction_lock = 0;
-
-        if(((ui_direction == 0) && (direction_lock == 0)) || (direction_lock == 1)){
-            motorVars_M1.speedRef_Hz =
-                (float)((ui_rpm_ref * POLE_PAIRS)/ 60.0f );
-                direction_lock = 1;
-        }
-
-        else if(((ui_direction == 1) && (direction_lock == 0)) || (direction_lock == -1)){
-            motorVars_M1.speedRef_Hz =
-                -(float)((ui_rpm_ref * POLE_PAIRS)/ 60.0f );
-            direction_lock = -1;
-        }
-
-        if (ui_state == UI_STATE_STOPPED){
-            direction_lock = 0;
-        }
-    }
-    else if(reversal_allowed == 1){
-        if(ui_direction == 0){
-            motorVars_M1.speedRef_Hz =
-                (float)((ui_rpm_ref * POLE_PAIRS)/ 60.0f );
-        }
-
-        else if(ui_direction == 1){
-            motorVars_M1.speedRef_Hz =
-                -(float)((ui_rpm_ref * POLE_PAIRS)/ 60.0f );
-        }
-    }
-
-    motorVars_M1.flagEnableRunAndIdentify =
-        (ui_state == UI_STATE_RUNNING) ? 1 : 0;
-
-    
-    if(ui_state == UI_STATE_RUNNING)
-    {
-        if(motorVars_M1.speedRef_Hz != (float)((ui_rpm_ref * POLE_PAIRS)/ 60.0f))
-        {
-            
-        }
-    }
-    
-    lv_subject_set_int(&subject_rpm_act, ui_rpm_act);
-    lv_subject_set_int(&subject_rpm_ref, ui_rpm_ref);
-
-    if(ui_rpm_act > lv_subject_get_int(&subject_peak_rpm)) {
-        lv_subject_set_int(&subject_peak_rpm, ui_rpm_act);
-    }
-
-/* fault */
-
-    if (ui_state != UI_STATE_RUNNING){
+        
+        //ui_rpm_act = approach(ui_rpm_act, 0, COAST_PER_TICK);                        
+        lv_subject_set_int(&subject_rpm_act, 0);
+        motorVars_M1.flagEnableRunAndIdentify =
+                        (ui_state == UI_STATE_RUNNING) ? 1 : 0;
         if (motorVars_M1.faultMtrNow.all != 0){
             if(lv_subject_get_int(&subject_fault_active)!=0)
             {
                 motorVars_M1.flagClearFaults = 1;
             }
         }
-    } 
-    else
-    {
-        if (motorVars_M1.faultMtrNow.all != 0)
-        {
-            lv_subject_set_int(&subject_fault_active, 1);
-            lv_subject_set_int(&subject_fault_count, 1);
-            lv_subject_set_int(&subject_state, UI_STATE_FAULT);
-        }
     }
 
-
-
+    if(ui_rpm_act > lv_subject_get_int(&subject_peak_rpm)) {
+        lv_subject_set_int(&subject_peak_rpm, ui_rpm_act);
+    }
 
     /* ── Load and current ─────────────────────────────────────────────────
      * Torque demand rises with speed and with the gap still being closed, so
@@ -269,9 +266,9 @@ static void bridge_tick(lv_timer_t *timer)
 
     /* ── Bus voltage ──────────────────────────────────────────────────────
      * Sags slightly under load; this is what the F311 fault in the log means. */
-    const int32_t bus_mv = 24000 - load * 18;
+    const int32_t bus_mv = 2400 - load * 18;
     format_milliamps(bus_buf, sizeof(bus_buf), bus_mv);
-    lv_subject_copy_string(&subject_bus_str, bus_buf);
+    lv_subject_copy_string(&subject_current_str, bus_buf);
 
 
     /* ── Session summary for the trend screen ─────────────────────────────── */
