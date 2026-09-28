@@ -8,3 +8,6 @@
 [submodule "samples/subsys/display/ti_motor_control/ui"]
 	path = samples/subsys/display/ti_motor_control/ui
 	url = git@github.com:lvgl-services/ti-motor-control.git
+[submodule "samples/zephyr_foc_motor_control_lvgl/ui"]
+	path = samples/zephyr_foc_motor_control_lvgl/ui
+	url = git@github.com:lvgl-services/ti-motor-control.git
